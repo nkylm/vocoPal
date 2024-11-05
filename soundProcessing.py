@@ -1,12 +1,13 @@
 import pyaudio
 import wave
-mysp=__import__("my-voice-analysis")
+import time
+
+mysp = __import__("my-voice-analysis")
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-RECORD_SECONDS = 10
 WAVE_OUTPUT_FILENAME = "output.wav"
 
 p = pyaudio.PyAudio()
@@ -17,31 +18,38 @@ stream = p.open(format=FORMAT,
                 input=True,
                 frames_per_buffer=CHUNK)
 
-print("* recording")
+print("Recording... Press Ctrl+C to stop")
 
-frames = []
+try:
+    while True:
+        frames = []
 
-for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-    data = stream.read(CHUNK)
-    frames.append(data)
+        # Record for a fixed duration (e.g., 10 seconds) before analysis
+        RECORD_SECONDS = 10
+        for _ in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+            data = stream.read(CHUNK)
+            frames.append(data)
 
-print("* done recording")
+        # Save the current recording to a WAV file
+        wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
 
-stream.stop_stream()
-stream.close()
-p.terminate()
+        # Run analysis on the new WAV file
+        audio_file = "output"
+        path_to_file = r"C:\\Users\Shun\Documents\\4A\\CAPSTONE\\VocoPal"  # Update this path as needed
+        mysp.mysptotal(audio_file, path_to_file)
 
-wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-wf.setnchannels(CHANNELS)
-wf.setsampwidth(p.get_sample_size(FORMAT))
-wf.setframerate(RATE)
-wf.writeframes(b''.join(frames))
-wf.close()
+        # Optionally, add a short sleep to control loop timing
+        time.sleep(1)
 
-p="output" # Audio File title
-c=r"C:\\Users\Shun\Documents\\4A\\CAPSTONE\\VocoPal" # Path to the Audio_File directory (Python 3.7)
-mysp.mysppaus(p,c)
+except KeyboardInterrupt:
+    print("\nStopped recording")
 
-
-
-
+finally:
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
