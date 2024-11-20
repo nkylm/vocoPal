@@ -1,7 +1,7 @@
 import io
 from contextlib import redirect_stdout
 from audio_recorder import record_audio
-from analysis_parser import parse_analysis_output
+from analysis_parser import parse_analysis_output, print_analysis_history
 import config
 
 mysp = __import__("my-voice-analysis")
@@ -27,6 +27,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\nStopped recording.")
+        print(print_analysis_history())
 
 if __name__ == "__main__":
     main()

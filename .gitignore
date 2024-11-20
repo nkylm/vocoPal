@@ -131,6 +131,10 @@ env.bak/
 venv.bak/
 config.py
 
+# Local stuff
+output.wav
+output.TextGrid
+
 # Spyder project settings
 .spyderproject
 .spyproject
