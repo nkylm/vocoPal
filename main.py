@@ -2,9 +2,11 @@ import io
 from contextlib import redirect_stdout
 from audio_recorder import record_audio
 from analysis_parser import parse_analysis_output
+from utils import check_params_against_threshold
 import config
 
 mysp = __import__("my-voice-analysis")
+THRESHOLDS = {'f0_mean': [100, 200], 'rate_of_speech': [2, 5]}
 
 def main():
     print("Press Ctrl+C to stop recording.")
@@ -23,7 +25,11 @@ def main():
 
             # Parse and print results
             audio_dict = parse_analysis_output(analysis_output)
+            threshold_results = {}
+            if audio_dict:
+                threshold_results = check_params_against_threshold(audio_dict, THRESHOLDS)
             print(audio_dict)
+            print(threshold_results)
 
     except KeyboardInterrupt:
         print("\nStopped recording.")
