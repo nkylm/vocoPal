@@ -8,6 +8,11 @@ require('dotenv').config();
 const FormData = require('form-data');
 
 const app = express();
+const connectDB = require('./db/db');
+const speechDataRouter = require('./routes/speechData');
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -53,6 +58,8 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
         res.status(500).json({ error: 'Failed to process audio file' });
     }
 });
+
+app.use('/api/speechData', speechDataRouter)
 
 // Start the server
 const PORT = process.env.PORT || 8000;
