@@ -1,13 +1,14 @@
-function App() {
+import { Routes, Route } from 'react-router-dom';
+import routes from './routes';
+
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          FRONTEND
-        </p>
-      </header>
-    </div>
+    <Routes>
+      {routes.map((route, index) => (
+        <Route key={index} path={route.path} element={route.element} />
+      ))}
+    </Routes>
   );
 }
-
 export default App;
+ 
