@@ -1,0 +1,12 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 256px; /* Matches the width in your Menu component */
+    height: 100vh; /* Full height of the viewport */
+    background-color: #001529; /* Typical Ant Design sidebar color */
+    color: white; /* Ensure text is visible */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Optional shadow for better visibility */
+    overflow-y: auto; /* Scroll if content overflows */
+    z-index: 1000; /* Ensure it stays above other elements */
+}

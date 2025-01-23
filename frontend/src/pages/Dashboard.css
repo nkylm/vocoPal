@@ -1,0 +1,41 @@
+/* Root layout for the dashboard */
+.dashboard-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar styling */
+.sidebar {
+    width: 256px;
+    height: 100%;
+    background-color: #001529;
+    z-index: 1000;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Container for navbar and content */
+.right-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Top navigation bar styling */
+.top-navbar {
+    height: 60px;
+    background-color: #ffffff;
+    padding: 0 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 500;
+}
+
+/* Main content area */
+.content {
+    flex: 1;
+    padding: 20px;
+    background-color: #f0f2f5;
+    overflow-y: auto;
+}
