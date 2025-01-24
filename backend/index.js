@@ -10,6 +10,7 @@ const FormData = require('form-data');
 const app = express();
 const connectDB = require('./db/db');
 const speechDataRouter = require('./routes/speechData');
+const thresholdsRouter = require('./routes/thresholds'); 
 
 // Connect to MongoDB
 connectDB();
@@ -60,6 +61,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 });
 
 app.use('/api/speechData', speechDataRouter)
+app.use('/api/thresholds', thresholdsRouter);
 
 // Start the server
 const PORT = process.env.PORT || 8000;
