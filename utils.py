@@ -13,7 +13,6 @@ def check_params_against_threshold(audio_dict, thresholds):
             "over": False,
         }
 
-        print(audio_dict)
         value = audio_dict[param]
         min_threshold, max_threshold = thresholds.get(param, [None, None])
         if min_threshold and max_threshold:

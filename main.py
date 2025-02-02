@@ -6,7 +6,7 @@ from utils import check_params_against_threshold
 import config
 
 mysp = __import__("my-voice-analysis")
-THRESHOLDS = {'f0_mean': [100, 200], 'rate_of_speech': [2, 5]}
+THRESHOLDS = {'f0_mean': [90, 200], 'rate_of_speech': [2, 4]}
 
 def main():
     print("Press Ctrl+C to stop recording.")
