@@ -9,6 +9,7 @@ const FormData = require('form-data');
 
 const app = express();
 const connectDB = require('./db/db');
+const authRouter = require ('./routes/auth')
 const speechDataRouter = require('./routes/speechData');
 const thresholdsRouter = require('./routes/thresholds'); 
 
@@ -60,6 +61,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
     }
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/speechData', speechDataRouter)
 app.use('/api/thresholds', thresholdsRouter);
 

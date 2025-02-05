@@ -3,6 +3,7 @@ import { Table, InputNumber, Button, Typography, message } from 'antd';
 import axios from 'axios';
 
 const { Title } = Typography;
+const token = localStorage.getItem('token');
 
 const ThresholdTable = () => {
   const [data, setData] = useState([
@@ -38,19 +39,23 @@ const ThresholdTable = () => {
 
       console.log(payload)
 
-      // Replace this user ID with the actual user ID from your application
-      const userId = '63e11d23f5a2b0f4e89e4b9c'; 
-
+      console.log(token)
       // Make the API call
-      const response = await axios.post('http://localhost:8000/api/thresholds/', {
-        user_id: userId,
-        volume_min: payload[0].min,
-        volume_max: payload[0].max,
-        pitch_min: payload[1].min,
-        pitch_max: payload[1].max,
-        speed_min: payload[2].min,
-        speed_max: payload[2].max,
-      });
+    const response = await axios.post(
+        'http://localhost:8000/api/thresholds/',
+        {  // Request body (data)
+            volume_min: payload[0].min,
+            volume_max: payload[0].max,
+            pitch_min: payload[1].min,
+            pitch_max: payload[1].max,
+            speed_min: payload[2].min,
+            speed_max: payload[2].max,
+        },
+        {  // Axios configuration (headers)
+            headers: { Authorization: token }
+        }
+    );
+
 
       console.log('Thresholds saved:', response.data);
       message.success('Target ranges saved successfully!');
