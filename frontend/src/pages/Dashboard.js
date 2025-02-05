@@ -12,13 +12,18 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
 
-  const userId = '63e11d23f5a2b0f4e89e4b9c'; // Replace with actual user ID
+  const userId = localStorage.getItem('userId'); 
+  const token = localStorage.getItem('token');
 
   // Fetch thresholds on component mount
   useEffect(() => {
     const fetchThresholds = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/api/thresholds/${userId}`);
+        console.log("token: ", token)
+        console.log("userId: ", userId)
+        const response = await axios.get(`http://localhost:8000/api/thresholds/`, {
+          headers: { Authorization: token }
+        });
         if (response.data && response.data.length) {
           const [threshold] = response.data; // Assuming one set of thresholds per user
           console.log('Thresholds: ', threshold)
@@ -47,9 +52,12 @@ const Dashboard = () => {
     const formattedEndDate = dayjs(dateString, "MMMM Do, YYYY").add(7, 'day').format("YYYY-MM-DD");
 
     try {
-      const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
+      const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {}, 
+      {
         params: { startDate: formattedStartDate, endDate: formattedEndDate },
-      });
+        headers: { Authorization: token }
+      },
+    );
 
       console.log('speechData response:', response)
       setSpeechData(response.data);
@@ -65,6 +73,9 @@ const Dashboard = () => {
       <div className="right-content">
         <TopNavBar />
         <div className="content">
+          <h3>
+            UserID: {userId}
+          </h3>
           <DatePickerDropdown onDateChange={handleDateChange} />
           {thresholds ? (
             <Graph

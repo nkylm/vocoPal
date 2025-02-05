@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const SpeechData = require('../db/models/speechData'); 
+const authMiddleware = require('../util/authMiddleware');
 
 // GET /api/speechData/:userId?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-router.get('/:userId', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     console.log('/api/speechData/userId')
     try {
-        const { userId } = req.params;
+        const { userId } = req.user;
         const { startDate, endDate } = req.query;
 
         // Build the query object

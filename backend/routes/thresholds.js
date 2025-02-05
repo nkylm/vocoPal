@@ -2,19 +2,22 @@ const express = require('express');
 const router = express.Router();
 const Thresholds = require('../db/models/thresholds'); // Import your Thresholds model
 const mongoose = require('mongoose');
+const authMiddleware = require('../util/authMiddleware');
 
 // GET: Fetch thresholds for a specific user
-router.get('/:userId', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user;
 
         console.log(userId)
-
+        
         // Fetch thresholds for the given user_id
         const thresholds = await Thresholds.find({ user_id: userId })
         if (!thresholds.length) {
             return res.status(404).json({ message: 'No thresholds found for this user' });
         }
+
+        console.log('thresholds: ', thresholds)
 
         res.status(200).json(thresholds);
     } catch (error) {
@@ -24,10 +27,9 @@ router.get('/:userId', async (req, res) => {
 });
 
 // POST: Add new thresholds for a specific user
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
     try {
         const {
-            user_id,
             volume_min,
             volume_max,
             pitch_min,
@@ -35,6 +37,8 @@ router.post('/', async (req, res) => {
             speed_min,
             speed_max,
         } = req.body;
+
+        const user_id = req.user
 
         // Validate required fields
         if (!user_id || volume_min == null || volume_max == null || pitch_min == null || pitch_max == null || speed_min == null || speed_max == null) {
