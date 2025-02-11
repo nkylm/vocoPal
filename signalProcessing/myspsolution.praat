@@ -181,17 +181,15 @@ minpause = 'minimum_pause_duration'
    timecorrection = originaldur/intdur
 
    # Insert voiced peaks in TextGrid
-   if showtext > 0
-      select 'textgridid'
-      Insert point tier... 1 syllables
-      
-      for i from 1 to voicedcount
-          position = voicedpeak'i' * timecorrection
-          Insert point... 1 position 'i'
-      endfor
-   endif
+   select 'textgridid'
+   Insert point tier... 1 syllables
+   
+   for i from 1 to voicedcount
+         position = voicedpeak'i' * timecorrection
+         Insert point... 1 position 'i'
+   endfor
 
-Save as text file: "'directory$'/'soundname$'.TextGrid"
+# Save as text file: "'directory$'/'soundname$'.TextGrid"
 
 # use object ID
 	Read from file... 'soundin$'
@@ -241,7 +239,7 @@ maxi='max$'
 	Read from file... 'soundin$'
 	soundname$ = selected$ ("Sound")
 	To Formant (burg)... 0 5 5500 0.025 50
-	Read from file... 'directory$'/'soundname$'.TextGrid
+	selectObject: textgridid
 	int=Get number of intervals... 2
 
 if int<2
@@ -305,7 +303,6 @@ f00 = exp (lnf0)
     Remove
     if showtext < 1
        select 'soundid'
-       plus 'textgridid'
        Remove
     endif
 
