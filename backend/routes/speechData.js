@@ -7,8 +7,10 @@ const authMiddleware = require('../util/authMiddleware');
 router.get('/', authMiddleware, async (req, res) => {
     console.log('/api/speechData/userId')
     try {
-        const { userId } = req.user;
+        const userId  = req.user;
         const { startDate, endDate } = req.query;
+
+        console.log('userId: ', userId)
 
         // Build the query object
         const query = { user_id: userId };
@@ -24,6 +26,7 @@ router.get('/', authMiddleware, async (req, res) => {
             }
         }
 
+        console.log('query: ', query)
         // Query the database
         const speechData = await SpeechData.find(query).sort({ date_recorded: -1 }); // Sort by most recent
 
