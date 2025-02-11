@@ -9,7 +9,7 @@ router.get('/', authMiddleware, async (req, res) => {
     try {
         const userId = req.user;
 
-        console.log(userId)
+        console.log('thresholds:', userId)
         
         // Fetch thresholds for the given user_id
         const thresholds = await Thresholds.find({ user_id: userId })

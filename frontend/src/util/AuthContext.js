@@ -1,30 +1,47 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-
+    const navigate = useNavigate();
+    
     useEffect(() => {
-        // Retrieve token and user ID from localStorage on app start
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
-
-        if (token && userId) {
-            setUser({ id: userId, token });  // Restore user state
+        const name = localStorage.getItem('name');
+        const email = localStorage.getItem('email');
+    
+        if (token && userId && name && email) {  // Check for all required fields
+            setUser({ 
+                id: userId, 
+                token, 
+                name, 
+                email 
+            });
+        } else {
+            // If any required field is missing, clear everything and redirect to login
+            localStorage.clear();
+            navigate('/login');
         }
-    }, []);
+    }, [navigate]);
 
-    const login = (token, userId) => {
+    const login = (token, user) => {
         localStorage.setItem('token', token);
-        localStorage.setItem('userId', userId);
-        setUser({ id: userId, token });
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('name', user.name)
+        localStorage.setItem('email', user.email)
+        setUser({ id: user.id, name: user.name, email: user.email, token });
     };
 
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
+        localStorage.removeItem('name');
+        localStorage.removeItem('email');
         setUser(null);
+        navigate('/login');
     };
 
     return (

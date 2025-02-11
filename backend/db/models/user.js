@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: [{ type: String, enum: ['patient', 'therapist']}],
+    role: { type: String, enum: ['patient', 'therapist'], required: true }, // ✅ Ensure role is required
     linked_users: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

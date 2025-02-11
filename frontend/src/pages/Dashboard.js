@@ -6,14 +6,42 @@ import DatePickerDropdown from '../components/DatePickerDropdown';
 import Graph from '../components/Graph';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { Card, Row, Col, Statistic } from 'antd';
 
 const Dashboard = () => {
   const [speechData, setSpeechData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
-
+  const [analytics, setAnalytics] = useState({
+    totalRecordings: 0,
+    avgVolume: 0,
+    avgPitch: 0,
+    avgSpeed: 0
+  });
   const userId = localStorage.getItem('userId'); 
   const token = localStorage.getItem('token');
+
+  // Calculate analytics from speech data
+  useEffect(() => {
+    if (speechData.length > 0) {
+      const totalRecordings = speechData.length;
+      console.log('speechData: ', speechData)
+      const avgVolume = speechData.reduce((sum, data) => sum + data.metrics.volume, 0) / totalRecordings;
+      const avgPitch = speechData.reduce((sum, data) => sum + data.metrics.pitch, 0) / totalRecordings;
+      const avgSpeed = speechData.reduce((sum, data) => sum + data.metrics.speed, 0) / totalRecordings;
+
+      console.log('avgVolume: ', avgVolume)
+      console.log('avgPitch: ', avgPitch)
+      console.log('avgSpeed: ', avgSpeed)
+
+      setAnalytics({
+        totalRecordings,
+        avgVolume: avgVolume.toFixed(1),
+        avgPitch: avgPitch.toFixed(1),
+        avgSpeed: avgSpeed.toFixed(1)
+      });
+    }
+  }, [speechData]);
 
   // Fetch thresholds on component mount
   useEffect(() => {
@@ -22,7 +50,7 @@ const Dashboard = () => {
         console.log("token: ", token)
         console.log("userId: ", userId)
         const response = await axios.get(`http://localhost:8000/api/thresholds/`, {
-          headers: { Authorization: token }
+          headers: { Authorization: `Bearer ${token}` }, 
         });
         if (response.data && response.data.length) {
           const [threshold] = response.data; // Assuming one set of thresholds per user
@@ -51,32 +79,83 @@ const Dashboard = () => {
     const formattedStartDate = dayjs(dateString, "MMMM Do, YYYY").format("YYYY-MM-DD");
     const formattedEndDate = dayjs(dateString, "MMMM Do, YYYY").add(7, 'day').format("YYYY-MM-DD");
 
-    try {
-      const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {}, 
-      {
-        params: { startDate: formattedStartDate, endDate: formattedEndDate },
-        headers: { Authorization: token }
-      },
-    );
+    const token = localStorage.getItem('token'); // Ensure token is retrieved
 
-      console.log('speechData response:', response)
-      setSpeechData(response.data);
-      setSelectedDate(dateString);
+    console.log('handleDateChange token:', token);
+
+    try {
+        const response = await axios.get('http://localhost:8000/api/speechData/', {
+            headers: { Authorization: `Bearer ${token}` }, 
+            params: { startDate: formattedStartDate, endDate: formattedEndDate }
+        });
+
+        console.log('SpeechData response:', response);
+        setSpeechData(response.data);
+        setSelectedDate(dateString);
     } catch (error) {
-      console.error('Error fetching speech data:', error.message);
-      setSpeechData([]);
+        console.error('Error fetching speech data:', error.message);
+        setSpeechData([]);
     }
-  };
-  return (
-    <div className="dashboard-layout">
-      <SideBar />
-      <div className="right-content">
-        <TopNavBar />
-        <div className="content">
-          <h3>
-            UserID: {userId}
-          </h3>
+};
+
+return (
+  <div className="dashboard-layout">
+    <SideBar />
+    <div className="right-content">
+      <TopNavBar />
+      <div className="content p-6">
+        <div className="mb-6">
           <DatePickerDropdown onDateChange={handleDateChange} />
+        </div>
+
+        {/* Analytics Cards */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="Total Recordings"
+                value={analytics.totalRecordings}
+                prefix={<i className="fas fa-microphone" />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="Average Volume"
+                value={analytics.avgVolume}
+                suffix="dB"
+                precision={1}
+                valueStyle={{ color: analytics.avgVolume > (thresholds?.volume_max || 0) ? '#cf1322' : '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="Average Pitch"
+                value={analytics.avgPitch}
+                suffix="Hz"
+                precision={1}
+                valueStyle={{ color: analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <Card>
+              <Statistic
+                title="Average Speed"
+                value={analytics.avgSpeed}
+                suffix="WPM"
+                precision={1}
+                valueStyle={{ color: analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Graph Section */}
+        <Card className="mb-6">
           {thresholds ? (
             <Graph
               speechData={speechData}
@@ -86,11 +165,13 @@ const Dashboard = () => {
           ) : (
             <p>Loading thresholds...</p>
           )}
-        </div>
+        </Card>
       </div>
     </div>
-  );
+  </div>
+);
 };
+
 
 export default Dashboard;
 
