@@ -1,21 +1,129 @@
 import React, { useState } from 'react';
-import { Table, InputNumber, Button, Typography, message } from 'antd';
+import { Table, Select, Button, Typography, message } from 'antd';
 import axios from 'axios';
 
 const { Title } = Typography;
-const token = localStorage.getItem('token');
+const { Option } = Select;
 
 const ThresholdTable = () => {
+  // Predefined ranges for each metric
+  const metricRanges = {
+    Volume: {
+      level: '60-70 dB',
+      levelOptions: {
+        Narrow: '60-70 dB',
+        Moderate: '55-75 dB',
+        Wide: '50-80 dB'
+      },
+      fluctuationOptions: {
+        Narrow: '± 6 dB',
+        Moderate: '± 10 dB',
+        Wide: '± 15 dB'
+      }
+    },
+    Pitch: {
+      level: '85-155 Hz',
+      levelOptions: {
+        Narrow: '85-155 Hz',
+        Moderate: '75-165 Hz',
+        Wide: '65-175 Hz'
+      },
+      fluctuationOptions: {
+        Narrow: '± 20 Hz',
+        Moderate: '± 35 Hz',
+        Wide: '± 50 Hz'
+      }
+    },
+    Speed: {
+      level: '4-5 syll/sec',
+      levelOptions: {
+        Narrow: '4-5 syll/sec',
+        Moderate: '3-6 syll/sec',
+        Wide: '2-7 syll/sec'
+      },
+      fluctuationOptions: {
+        Narrow: '± 3 syll/sec',
+        Moderate: '± 4 syll/sec',
+        Wide: '± 5 syll/sec'
+      }
+    }
+  };
+
   const [data, setData] = useState([
-    { key: '1', metric: 'Volume', level: 50, fluctuation: 10 },
-    { key: '2', metric: 'Pitch', level: 150, fluctuation: 20 },
-    { key: '3', metric: 'Speed', level: 3, fluctuation: 0.5 },
+    { 
+      key: '1', 
+      metric: 'Volume',
+      levelType: 'Narrow',
+      fluctuationType: 'Moderate'
+    },
+    { 
+      key: '2', 
+      metric: 'Pitch',
+      levelType: 'Wide',
+      fluctuationType: 'Narrow'
+    },
+    { 
+      key: '3', 
+      metric: 'Speed',
+      levelType: 'Moderate',
+      fluctuationType: 'Wide'
+    }
   ]);
 
   const [loading, setLoading] = useState(false);
 
-  // Update the data dynamically
-  const handleInputChange = (value, recordKey, field) => {
+  // Helper function to parse range values
+  const parseRange = (rangeStr) => {
+    if (rangeStr.includes('syll/sec')) {
+      const [min, max] = rangeStr.replace(' syll/sec', '').split('-').map(Number);
+      return { min, max };
+    } else if (rangeStr.includes('dB')) {
+      const [min, max] = rangeStr.replace(' dB', '').split('-').map(Number);
+      return { min, max };
+    } else if (rangeStr.includes('Hz')) {
+      const [min, max] = rangeStr.replace(' Hz', '').split('-').map(Number);
+      return { min, max };
+    }
+    return null;
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Prepare the payload based on selected ranges
+      const volumeRange = parseRange(metricRanges.Volume.levelOptions[data[0].levelType]);
+      const pitchRange = parseRange(metricRanges.Pitch.levelOptions[data[1].levelType]);
+      const speedRange = parseRange(metricRanges.Speed.levelOptions[data[2].levelType]);
+
+      const payload = {
+        volume_min: volumeRange.min,
+        volume_max: volumeRange.max,
+        pitch_min: pitchRange.min,
+        pitch_max: pitchRange.max,
+        speed_min: speedRange.min,
+        speed_max: speedRange.max,
+      };
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'http://localhost:8000/api/thresholds/',
+        payload,
+        {
+            headers: { Authorization: `Bearer ${token}` }, 
+        }
+      );
+
+      console.log('Thresholds saved:', response.data);
+      message.success('Target ranges saved successfully!');
+    } catch (error) {
+      console.error('Error saving thresholds:', error);
+      message.error('Failed to save target ranges. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (value, recordKey, field) => {
     const updatedData = data.map((item) => {
       if (item.key === recordKey) {
         return { ...item, [field]: value };
@@ -25,85 +133,60 @@ const ThresholdTable = () => {
     setData(updatedData);
   };
 
-  // Save the processed data
-  const handleSave = async () => {
-    setLoading(true);
-
-    try {
-      // Prepare the data for the API call
-      const payload = data.map((item) => ({
-        metric: item.metric,
-        min: item.level - item.fluctuation,
-        max: item.level + item.fluctuation,
-      }));
-
-      console.log(payload)
-
-      console.log(token)
-      // Make the API call
-    const response = await axios.post(
-        'http://localhost:8000/api/thresholds/',
-        {  // Request body (data)
-            volume_min: payload[0].min,
-            volume_max: payload[0].max,
-            pitch_min: payload[1].min,
-            pitch_max: payload[1].max,
-            speed_min: payload[2].min,
-            speed_max: payload[2].max,
-        },
-        {  // Axios configuration (headers)
-            headers: { Authorization: token }
-        }
-    );
-
-
-      console.log('Thresholds saved:', response.data);
-      message.success('Target ranges saved successfully!');
-    } catch (error) {
-      console.error('Error saving thresholds:', error.message);
-      message.error('Failed to save target ranges. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const columns = [
     {
-      title: 'Metric',
+      title: 'Name',
       dataIndex: 'metric',
       key: 'metric',
-      render: (text) => <strong>{text}</strong>, // Bold metric name
+      render: (text) => <strong>{text}</strong>,
     },
     {
       title: 'Level',
-      dataIndex: 'level',
+      dataIndex: 'levelType',
       key: 'level',
       render: (text, record) => (
-        <InputNumber
-          min={0}
-          value={record.level}
-          onChange={(value) => handleInputChange(value, record.key, 'level')}
-        />
+        <div>
+          <Select
+            value={record.levelType}
+            onChange={(value) => handleChange(value, record.key, 'levelType')}
+            style={{ width: 120, marginRight: 8 }}
+          >
+            <Option value="Narrow">Narrow</Option>
+            <Option value="Moderate">Moderate</Option>
+            <Option value="Wide">Wide</Option>
+          </Select>
+          <span style={{ marginLeft: 8, color: '#666' }}>
+            {metricRanges[record.metric].levelOptions[record.levelType]}
+          </span>
+        </div>
       ),
     },
     {
       title: 'Fluctuation',
-      dataIndex: 'fluctuation',
+      dataIndex: 'fluctuationType',
       key: 'fluctuation',
       render: (text, record) => (
-        <InputNumber
-          min={0}
-          value={record.fluctuation}
-          step={record.metric === 'Speed' ? 0.1 : 1}
-          onChange={(value) => handleInputChange(value, record.key, 'fluctuation')}
-        />
+        <div>
+          <Select
+            value={record.fluctuationType}
+            onChange={(value) => handleChange(value, record.key, 'fluctuationType')}
+            style={{ width: 120, marginRight: 8 }}
+          >
+            <Option value="Narrow">Narrow</Option>
+            <Option value="Moderate">Moderate</Option>
+            <Option value="Wide">Wide</Option>
+          </Select>
+          <span style={{ marginLeft: 8, color: '#666' }}>
+            {metricRanges[record.metric].fluctuationOptions[record.fluctuationType]}
+          </span>
+        </div>
       ),
     },
   ];
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={3}>Set Target Ranges</Title>
+      <Title level={3}>Target Range Tolerance</Title>
       <Table
         columns={columns}
         dataSource={data}
