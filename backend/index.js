@@ -39,7 +39,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
         console.log(`Received file: ${audioFileName}`);
 
         // Send the file to the Python microservice
-        const microserviceUrl = process.env.FLASK_URL || 'http://localhost:8001/process';
+        const microserviceUrl = 'http://0.0.0.0:8001/process';
         const formData = new FormData();
         formData.append('audio', fs.createReadStream(audioFilePath));
 
@@ -48,7 +48,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
                 ...formData.getHeaders(),
             },
         });
-
+        
         // Delete the local file after processing
         fs.unlinkSync(audioFilePath);
 
