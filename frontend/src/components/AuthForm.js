@@ -46,13 +46,7 @@ const AuthForm = () => {
       key: '1',
       label: 'Login',
       children: (
-        <Form
-          name="login"
-          onFinish={handleLogin}
-          autoComplete="off"
-          layout="vertical"
-          size="large"
-        >
+        <Form name="login" onFinish={handleLogin} autoComplete="off" layout="vertical" size="large">
           <Form.Item
             name="email"
             rules={[
@@ -60,18 +54,15 @@ const AuthForm = () => {
               { type: 'email', message: 'Please enter a valid email!' }
             ]}
           >
-            <Input 
-              prefix={<MailOutlined className="text-gray-400" />} 
-              placeholder="Email"
-            />
+            <Input prefix={<MailOutlined className="text-gray-400" />} placeholder="Email" />
           </Form.Item>
 
           <Form.Item
             name="password"
             rules={[{ required: true, message: 'Please input your password!' }]}
           >
-            <Input.Password 
-              prefix={<LockOutlined className="text-gray-400" />} 
+            <Input.Password
+              prefix={<LockOutlined className="text-gray-400" />}
               placeholder="Password"
             />
           </Form.Item>
@@ -82,7 +73,7 @@ const AuthForm = () => {
             </Button>
           </Form.Item>
         </Form>
-      ),
+      )
     },
     {
       key: '2',
@@ -96,14 +87,8 @@ const AuthForm = () => {
           layout="vertical"
           size="large"
         >
-          <Form.Item
-            name="name"
-            rules={[{ required: true, message: 'Please input your name!' }]}
-          >
-            <Input 
-              prefix={<UserOutlined className="text-gray-400" />} 
-              placeholder="Full Name"
-            />
+          <Form.Item name="name" rules={[{ required: true, message: 'Please input your name!' }]}>
+            <Input prefix={<UserOutlined className="text-gray-400" />} placeholder="Full Name" />
           </Form.Item>
 
           <Form.Item
@@ -113,10 +98,7 @@ const AuthForm = () => {
               { type: 'email', message: 'Please enter a valid email!' }
             ]}
           >
-            <Input 
-              prefix={<MailOutlined className="text-gray-400" />} 
-              placeholder="Email"
-            />
+            <Input prefix={<MailOutlined className="text-gray-400" />} placeholder="Email" />
           </Form.Item>
 
           <Form.Item
@@ -126,16 +108,13 @@ const AuthForm = () => {
               { min: 6, message: 'Password must be at least 6 characters!' }
             ]}
           >
-            <Input.Password 
-              prefix={<LockOutlined className="text-gray-400" />} 
+            <Input.Password
+              prefix={<LockOutlined className="text-gray-400" />}
               placeholder="Password"
             />
           </Form.Item>
 
-          <Form.Item
-            name="role"
-            rules={[{ required: true, message: 'Please select a role!' }]}
-          >
+          <Form.Item name="role" rules={[{ required: true, message: 'Please select a role!' }]}>
             <Select placeholder="Select role">
               <Option value="patient">Patient</Option>
               <Option value="therapist">Therapist</Option>
@@ -148,22 +127,24 @@ const AuthForm = () => {
             </Button>
           </Form.Item>
         </Form>
-      ),
-    },
+      )
+    }
   ];
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      background: '#f0f2f5',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px'
-    }}>
-      <Card 
-        style={{ 
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#f0f2f5',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
+      }}
+    >
+      <Card
+        style={{
           width: '100%',
           maxWidth: '400px',
           borderRadius: '8px',
@@ -172,14 +153,12 @@ const AuthForm = () => {
         bordered={false}
       >
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <Title level={3} style={{ marginBottom: '8px' }}>Welcome Back</Title>
+          <Title level={3} style={{ marginBottom: '8px' }}>
+            Welcome Back
+          </Title>
           <Typography.Text type="secondary">Sign in to continue</Typography.Text>
         </div>
-        <Tabs 
-          items={items}
-          centered
-          size="large"
-        />
+        <Tabs items={items} centered size="large" />
       </Card>
     </div>
   );

@@ -1,0 +1,31 @@
+.settings-content {
+  padding: 20px 30px;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.settings-header h1 {
+  margin-bottom: 0;
+}
+
+.threshold-title {
+  margin-top: 40px;
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.share-button {
+  background-color: #2e7c67;
+  border-color: #2e7c67;
+}
+
+.share-button:hover {
+  background-color: #236752;
+  border-color: #236752;
+}

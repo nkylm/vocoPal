@@ -50,20 +50,20 @@ const ThresholdTable = () => {
   };
 
   const [data, setData] = useState([
-    { 
-      key: '1', 
+    {
+      key: '1',
       metric: 'Volume',
       levelType: 'Narrow',
       fluctuationType: 'Moderate'
     },
-    { 
-      key: '2', 
+    {
+      key: '2',
       metric: 'Pitch',
       levelType: 'Wide',
       fluctuationType: 'Narrow'
     },
-    { 
-      key: '3', 
+    {
+      key: '3',
       metric: 'Speed',
       levelType: 'Moderate',
       fluctuationType: 'Wide'
@@ -101,17 +101,13 @@ const ThresholdTable = () => {
         pitch_min: pitchRange.min,
         pitch_max: pitchRange.max,
         speed_min: speedRange.min,
-        speed_max: speedRange.max,
+        speed_max: speedRange.max
       };
 
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'http://localhost:8000/api/thresholds/',
-        payload,
-        {
-            headers: { Authorization: `Bearer ${token}` }, 
-        }
-      );
+      const response = await axios.post('http://localhost:8000/api/thresholds/', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       console.log('Thresholds saved:', response.data);
       message.success('Target ranges saved successfully!');
@@ -138,7 +134,7 @@ const ThresholdTable = () => {
       title: 'Name',
       dataIndex: 'metric',
       key: 'metric',
-      render: (text) => <strong>{text}</strong>,
+      render: (text) => <strong>{text}</strong>
     },
     {
       title: 'Level',
@@ -159,7 +155,7 @@ const ThresholdTable = () => {
             {metricRanges[record.metric].levelOptions[record.levelType]}
           </span>
         </div>
-      ),
+      )
     },
     {
       title: 'Fluctuation',
@@ -180,26 +176,15 @@ const ThresholdTable = () => {
             {metricRanges[record.metric].fluctuationOptions[record.fluctuationType]}
           </span>
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   return (
     <div style={{ padding: 20 }}>
       <Title level={3}>Target Range Tolerance</Title>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={false}
-        bordered
-        size="middle"
-      />
-      <Button
-        type="primary"
-        style={{ marginTop: 16 }}
-        onClick={handleSave}
-        loading={loading}
-      >
+      <Table columns={columns} dataSource={data} pagination={false} bordered size="middle" />
+      <Button type="primary" style={{ marginTop: 16 }} onClick={handleSave} loading={loading}>
         Save Target Ranges
       </Button>
     </div>

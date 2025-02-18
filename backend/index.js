@@ -12,6 +12,7 @@ const connectDB = require('./db/db');
 const authRouter = require ('./routes/auth')
 const speechDataRouter = require('./routes/speechData');
 const thresholdsRouter = require('./routes/thresholds'); 
+const accessRouter = require('./routes/access')
 
 // Connect to MongoDB
 connectDB();
@@ -64,6 +65,7 @@ app.post('/api/upload', upload.single('audio'), async (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/speechData', speechDataRouter)
 app.use('/api/thresholds', thresholdsRouter);
+app.use('/api/access', accessRouter)
 
 // Start the server
 const PORT = process.env.PORT || 8000;
