@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import SideBar from '../components/SideBar';
 import TopNavBar from '../components/TopNavBar';
-import './Dashboard.css';
+import './PatientDashboard.css';
 import ThresholdTable from '../components/ThresholdTable';
 import PermissionsTable from '../components/PermissionsTable';
 import ShareModal from '../components/ShareModal';
 import { Button } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
-import './Settings.css';
+import './PatientSettings.css';
 
-const Settings = () => {
+const PatientSettings = () => {
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [permissionsKey, setPermissionsKey] = useState(0); // Used to force re-render of PermissionsTable
 
@@ -52,4 +52,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default PatientSettings;

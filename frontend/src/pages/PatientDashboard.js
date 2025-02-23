@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import SideBar from '../components/SideBar';
 import TopNavBar from '../components/TopNavBar';
-import './Dashboard.css';
+import './PatientDashboard.css';
 import DatePickerDropdown from '../components/DatePickerDropdown';
 import Graph from '../components/Graph';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { Card, Row, Col, Statistic } from 'antd';
 
-const Dashboard = () => {
+const PatientDashboard = () => {
   const [speechData, setSpeechData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
@@ -52,7 +52,7 @@ const Dashboard = () => {
       try {
         console.log('token: ', token);
         console.log('userId: ', userId);
-        const response = await axios.get(`http://localhost:8000/api/thresholds/`, {
+        const response = await axios.get(`http://localhost:8000/api/thresholds/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data && response.data.length) {
@@ -87,7 +87,7 @@ const Dashboard = () => {
     console.log('handleDateChange token:', token);
 
     try {
-      const response = await axios.get('http://localhost:8000/api/speechData/', {
+      const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { startDate: formattedStartDate, endDate: formattedEndDate }
       });
@@ -178,4 +178,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default PatientDashboard;
