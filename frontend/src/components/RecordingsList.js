@@ -10,7 +10,7 @@ const RecordingsList = ({ userId }) => {
     const fetchRecordings = async () => {
       try {
         const token = localStorage.getItem("token"); // Get stored token
-        const response = await axios.get(`http://localhost:8000/api/speechData/${userId}/videos`, {
+        const response = await axios.get(`http://localhost:8000/api/speechData/${userId}/recordings`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecordings(response.data);
@@ -37,7 +37,7 @@ const RecordingsList = ({ userId }) => {
             <List.Item>
               <Card title={new Date(recording.date_recorded).toLocaleString()} style={{ width: 300 }}>
                 <video width="100%" controls>
-                  <source src={recording.video_url} type="video/mp4" />
+                  <source src={recording.recording_url} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </Card>

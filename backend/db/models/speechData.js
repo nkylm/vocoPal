@@ -27,7 +27,7 @@ const SpeechDataSchema = new mongoose.Schema({
       ],
     },
   ],
-  video_url: { type: String, required: true }, // Store S3 file link
+  recording_url: { type: String, required: true }, // Store S3 file link
 });
 
 module.exports = mongoose.model("SpeechData", SpeechDataSchema);

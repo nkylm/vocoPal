@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
   try {
     console.log("/api/speechData");
     // Extract data from the request body
-    const { user_id, date_recorded, metrics, audio_url, audio_notes } =
+    const { user_id, date_recorded, metrics, audio_url, audio_notes, recording_url } =
       req.body;
 
     // Validate required fields
@@ -83,22 +83,27 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/:userId/videos", async (req, res) => {
-    try {
-      const { userId } = req.params;
-  
-      const videos = await SpeechData.find({ user_id: userId }).sort({ date_recorded: -1 });
-  
-      if (!videos.length) {
-        return res.status(404).json({ message: "No recordings found for this user" });
-      }
-  
-      res.status(200).json(videos);
-    } catch (error) {
-      console.error("Error fetching videos:", error.message);
-      res.status(500).json({ error: "Failed to fetch recordings" });
+router.get("/:userId/recordings", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch only `recording_url` & `date_recorded` for user's speech data
+    const recordings = await SpeechData.find(
+      { user_id: userId, recording_url: { $exists: true, $ne: null } }, // Only fetch entries with a recording
+      { recording_url: 1, date_recorded: 1, _id: 0 } // Only return these fields
+    ).sort({ date_recorded: -1 });
+
+    if (!recordings.length) {
+      return res.status(404).json({ message: "No recordings found for this user" });
     }
-  });
+
+    res.status(200).json(recordings);
+  } catch (error) {
+    console.error("Error fetching recordings:", error.message);
+    res.status(500).json({ error: "Failed to fetch recordings" });
+  }
+});
+
   
 
 module.exports = router;
