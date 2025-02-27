@@ -11,7 +11,7 @@ const ProfileDropdown = () => {
   // Get initials from first and last name with null checks
   const getInitials = (name) => {
     if (!name) return '';
-    
+
     const names = name.split(' ');
     if (names.length >= 2) {
       return (names[0][0] + names[names.length - 1][0]).toUpperCase();
@@ -34,25 +34,25 @@ const ProfileDropdown = () => {
           <div style={{ fontWeight: 500 }}>{user.name}</div>
           <div style={{ fontSize: '14px', color: '#666' }}>{user.email}</div>
         </div>
-      ),
+      )
     },
     {
-      type: 'divider',
+      type: 'divider'
     },
     {
       key: 'profile',
       label: 'Profile',
       icon: <UserOutlined />,
-      onClick: () => navigate('/profile'),
+      onClick: () => navigate('/profile')
     },
     {
       key: 'add-account',
       label: 'Add account',
       icon: <PlusOutlined />,
-      onClick: () => navigate('/add-account'),
+      onClick: () => navigate('/add-account')
     },
     {
-      type: 'divider',
+      type: 'divider'
     },
     {
       key: 'logout',
@@ -60,8 +60,8 @@ const ProfileDropdown = () => {
       icon: <LogoutOutlined />,
       onClick: () => {
         logout();
-      },
-    },
+      }
+    }
   ];
 
   return (
@@ -71,7 +71,7 @@ const ProfileDropdown = () => {
         trigger={['click']}
         placement="bottomRight"
         arrow={{
-          pointAtCenter: true,
+          pointAtCenter: true
         }}
       >
         <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
@@ -79,7 +79,7 @@ const ProfileDropdown = () => {
             style={{
               backgroundColor: '#F6E05E',
               color: '#000',
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
             size={32}
           >

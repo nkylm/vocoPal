@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const items = [
   { key: '/', icon: <HomeOutlined />, label: 'Home', path: '/' },
-  { key: '/settings', icon: <SettingOutlined />, label: 'Settings', path: '/settings' },
+  { key: '/settings', icon: <SettingOutlined />, label: 'Settings', path: '/settings' }
 ];
 
 const SideBar = () => {
@@ -24,7 +24,7 @@ const SideBar = () => {
       onClick={onClick}
       style={{
         width: 256,
-        height: '100vh',
+        height: '100vh'
       }}
       selectedKeys={[location.pathname]}
       mode="inline"

@@ -16,17 +16,17 @@ const TopNavBar = () => {
         {
           label: 'Home',
           key: '/',
-          icon: <HomeOutlined />,
+          icon: <HomeOutlined />
         }
       ];
     }
-    
+
     if (currentPath === '/settings') {
       return [
         {
           label: 'Settings',
           key: '/settings',
-          icon: <SettingOutlined />,
+          icon: <SettingOutlined />
         }
       ];
     }
@@ -39,25 +39,27 @@ const TopNavBar = () => {
   };
 
   return (
-    <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
         backgroundColor: '#fff',
         borderBottom: '1px solid #f0f0f0'
-      }}>
-        <Menu 
-          onClick={onClick} 
-          selectedKeys={[currentPath]}
-          mode="horizontal" 
-          items={getMenuItems()} 
-          style={{ flex: 1 }}
-        />
-        <div style={{ padding: '0 16px' }}>
-          <ProfileDropdown />
-        </div>
+      }}
+    >
+      <Menu
+        onClick={onClick}
+        selectedKeys={[currentPath]}
+        mode="horizontal"
+        items={getMenuItems()}
+        style={{ flex: 1 }}
+      />
+      <div style={{ padding: '0 16px' }}>
+        <ProfileDropdown />
       </div>
+    </div>
   );
 };
 
