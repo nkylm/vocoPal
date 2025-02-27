@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 const FormData = require("form-data");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const app = express();
 const connectDB = require("./db/db");

@@ -83,4 +83,22 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/:userId/videos", async (req, res) => {
+    try {
+      const { userId } = req.params;
+  
+      const videos = await SpeechData.find({ user_id: userId }).sort({ date_recorded: -1 });
+  
+      if (!videos.length) {
+        return res.status(404).json({ message: "No recordings found for this user" });
+      }
+  
+      res.status(200).json(videos);
+    } catch (error) {
+      console.error("Error fetching videos:", error.message);
+      res.status(500).json({ error: "Failed to fetch recordings" });
+    }
+  });
+  
+
 module.exports = router;
