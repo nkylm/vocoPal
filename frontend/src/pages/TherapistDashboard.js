@@ -4,6 +4,7 @@ import TherapistSideBar from '../components/TherapistSideBar';
 import TherapistTopNavBar from '../components/TherapistTopNavBar';
 import DatePickerDropdown from '../components/DatePickerDropdown';
 import Graph from '../components/Graph';
+import RecordingsList from '../components/RecordingsList';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import './TherapistDashboard.css';
@@ -16,6 +17,7 @@ const TherapistDashboard = () => {
   const [speechData, setSpeechData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
+  const [hasRecordingsAccess, setHasRecordingsAccess] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalRecordings: 0,
     avgVolume: 0,
@@ -38,8 +40,12 @@ const TherapistDashboard = () => {
         );
 
         setPatients(patientsWithAccess);
+
+        console.log('patientsWithAccess', patientsWithAccess)
         if (patientsWithAccess.length > 0) {
-          setSelectedPatient(patientsWithAccess[0].userId._id);
+          const firstPatient = patientsWithAccess[0];
+          setSelectedPatient(firstPatient.userId._id);
+          setHasRecordingsAccess(firstPatient.recordings || false);
         }
       } catch (error) {
         console.error('Error fetching patients:', error);
@@ -126,6 +132,14 @@ const TherapistDashboard = () => {
     setSelectedPatient(patientId);
     setSpeechData([]); // Clear previous patient's data
     setSelectedDate(null);
+    
+    // Update recordings access status for the selected patient
+    const selectedPatientData = patients.find(p => p.userId._id === patientId);
+    if (selectedPatientData) {
+      setHasRecordingsAccess(selectedPatientData.recordings || false);
+    } else {
+      setHasRecordingsAccess(false);
+    }
   };
 
   return (
@@ -211,6 +225,13 @@ const TherapistDashboard = () => {
                   </Card>
                 </Col>
               </Row>
+
+              {/* Conditionally render RecordingsList based on permissions */}
+              {hasRecordingsAccess && selectedPatient && (
+                <Card className="mb-6">
+                  <RecordingsList userId={selectedPatient} /> 
+                </Card>
+              )}
 
               <Card className="mb-6">
                 {thresholds ? (
