@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout, Typography, Button, Avatar } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import vocalpalLogo from '../util/vocopalLogo.svg';
 
 const { Sider } = Layout;
 const { Title } = Typography;
@@ -27,7 +28,7 @@ const TherapistSideBar = ({ patients, selectedPatient, onPatientSelect }) => {
             marginBottom: '24px'
           }}
         >
-          <img src="/logo.png" alt="VocoPal" style={{ height: '32px' }} />
+          <img src={vocalpalLogo} alt="VocoPal" style={{ height: '32px' }} />
         </div>
         <div
           style={{
