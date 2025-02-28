@@ -7,6 +7,7 @@ import Graph from '../components/Graph';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import { Card, Row, Col, Statistic } from 'antd';
+import RecordingsList from '../components/RecordingsList';
 
 const PatientDashboard = () => {
   const [speechData, setSpeechData] = useState([]);
@@ -163,6 +164,8 @@ const PatientDashboard = () => {
               </Card>
             </Col>
           </Row>
+
+          <RecordingsList userId={userId} /> {/* Show recordings here */}
 
           {/* Graph Section */}
           <Card className="mb-6">
