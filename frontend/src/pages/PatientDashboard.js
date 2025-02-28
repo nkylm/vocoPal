@@ -165,6 +165,8 @@ const PatientDashboard = () => {
             </Col>
           </Row>
 
+          <RecordingsList userId={userId} /> {/* Show recordings here */}
+
           {/* Graph Section */}
           <Card className="mb-6">
             {thresholds ? (
@@ -173,7 +175,6 @@ const PatientDashboard = () => {
               <p>Loading thresholds...</p>
             )}
           </Card>
-          <RecordingsList userId={userId} /> {/* Show recordings here */}
         </div>
       </div>
     </div>

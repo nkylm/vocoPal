@@ -60,7 +60,6 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
         ContentType: req.file.mimetype,
       };  
 
-    console.log('s3: ', s3)
     console.log('uploadParams: ', uploadParams)
 
     // Upload file to S3
@@ -72,7 +71,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log('s3url', s3Url)
 
     // Send the file to the Python microservice
-    const microserviceUrl = process.env.FLASK_HOSTED_URL || 'http://localhost:8001/process';
+    const microserviceUrl = 'http://localhost:8001/process';
     const formData = new FormData();
     formData.append('audio', fs.createReadStream(audioFilePath));
 
@@ -82,24 +81,33 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       },
     });
 
+    console.log(response)
+
     const speechDataPayload = {
-        user_id: req.body.user_id, // Ensure frontend sends this
+        user_id: '67b401b7550a00da2009bc32', // hard coded for now 
         date_recorded: new Date(),
-        metrics: req.body.metrics || {}, // Ensure metrics are included
-        audio_notes: req.body.audio_notes || "", // Optional notes
+        metrics: {
+            volume: 100, // hard coded for now
+            pitch: response.data.f0_mean,
+            speed: response.data.rate_of_speech,
+        } || {}, // Ensure metrics are included
+        audio_notes: response.data.audio_notes || "normal", // Optional notes
         recording_url: s3Url, // Store S3 URL in speechData
       };
 
+    console.log('speechDataPayload: ', speechDataPayload)
+
     const speechDataResponse = await axios.post(
-    "http://localhost:8000/api/speechData", 
+        "http://localhost:8000/api/speechData", 
     speechDataPayload,
     );
+
+    console.log('speechDataResponse: ', speechDataResponse.data)
 
     // Delete the local file after processing
     fs.unlinkSync(audioFilePath);
 
     // Send the response back to the client
-    res.status(200).json(response.data);
     res.status(200).json({
         message: "File uploaded and speech data saved successfully",
         speechData: speechDataResponse.data,

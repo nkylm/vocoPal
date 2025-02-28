@@ -14,6 +14,7 @@ const RecordingsList = ({ userId }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecordings(response.data);
+        console.log(response.data)
       } catch (error) {
         console.error("Error fetching recordings:", error);
       } finally {
@@ -37,8 +38,8 @@ const RecordingsList = ({ userId }) => {
             <List.Item>
               <Card title={new Date(recording.date_recorded).toLocaleString()} style={{ width: 300 }}>
                 <video width="100%" controls>
-                  <source src={recording.recording_url} type="video/mp4" />
-                  Your browser does not support the video tag.
+                  <source src={recording.recording_url} type="audio/wav" />
+                  Your browser does not support the audio tag.
                 </video>
               </Card>
             </List.Item>

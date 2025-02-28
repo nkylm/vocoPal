@@ -12,7 +12,6 @@ const SpeechDataSchema = new mongoose.Schema({
     pitch: { type: Number, required: true },
     speed: { type: Number, required: true },
   },
-  audio_url: { type: String }, // Optional highlight clip URL
   audio_notes: [
     {
       type: String,
