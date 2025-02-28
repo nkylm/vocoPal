@@ -5,7 +5,7 @@ import axios from 'axios';
 const { Title } = Typography;
 const { Option } = Select;
 
-const ThresholdTable = () => {
+const ThresholdTable = ({ patientId, readOnly }) => {
   // Predefined ranges for each metric
   const metricRanges = {
     Volume: {
@@ -90,6 +90,10 @@ const ThresholdTable = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      if (readOnly) {
+        throw new Error('Read-only mode - changes not allowed');
+      }
+
       // Prepare the payload based on selected ranges
       const volumeRange = parseRange(metricRanges.Volume.levelOptions[data[0].levelType]);
       const pitchRange = parseRange(metricRanges.Pitch.levelOptions[data[1].levelType]);
@@ -105,15 +109,20 @@ const ThresholdTable = () => {
       };
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8000/api/thresholds/', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(
+        `http://localhost:8000/api/thresholds/${patientId}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      console.log('Thresholds saved:', response.data);
       message.success('Target ranges saved successfully!');
     } catch (error) {
-      console.error('Error saving thresholds:', error);
-      message.error('Failed to save target ranges. Please try again.');
+      console.error('Error:', error);
+      if (error.message === 'Read-only mode - changes not allowed') {
+        message.error("You don't have permission to modify these settings.");
+      } else {
+        message.error('Failed to save target ranges. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -146,6 +155,7 @@ const ThresholdTable = () => {
             value={record.levelType}
             onChange={(value) => handleChange(value, record.key, 'levelType')}
             style={{ width: 120, marginRight: 8 }}
+            disabled={readOnly}
           >
             <Option value="Narrow">Narrow</Option>
             <Option value="Moderate">Moderate</Option>
@@ -167,6 +177,7 @@ const ThresholdTable = () => {
             value={record.fluctuationType}
             onChange={(value) => handleChange(value, record.key, 'fluctuationType')}
             style={{ width: 120, marginRight: 8 }}
+            disabled={readOnly}
           >
             <Option value="Narrow">Narrow</Option>
             <Option value="Moderate">Moderate</Option>
@@ -184,7 +195,13 @@ const ThresholdTable = () => {
     <div style={{ padding: 20 }}>
       <Title level={3}>Target Range Tolerance</Title>
       <Table columns={columns} dataSource={data} pagination={false} bordered size="middle" />
-      <Button type="primary" style={{ marginTop: 16 }} onClick={handleSave} loading={loading}>
+      <Button 
+        type="primary" 
+        style={{ marginTop: 16 }} 
+        onClick={handleSave} 
+        loading={loading}
+        disabled={readOnly}
+      >
         Save Target Ranges
       </Button>
     </div>

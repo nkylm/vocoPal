@@ -41,9 +41,10 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log(`Received file: ${audioFileName}`);
 
     // Send the file to the Python microservice
-    const microserviceUrl = process.env.FLASK_HOSTED_URL || 'http://localhost:8001/process';
+    const microserviceUrl =
+      process.env.FLASK_HOSTED_URL || "http://localhost:8001/process";
     const formData = new FormData();
-    formData.append('audio', fs.createReadStream(audioFilePath));
+    formData.append("audio", fs.createReadStream(audioFilePath));
 
     const response = await axios.post(microserviceUrl, formData, {
       headers: {
