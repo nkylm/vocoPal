@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
   try {
     console.log("/api/speechData");
     // Extract data from the request body
-    const { user_id, date_recorded, metrics, audio_url, audio_notes } =
+    const { user_id, date_recorded, metrics, audio_url, audio_notes, recording_url } =
       req.body;
 
     // Validate required fields
@@ -67,7 +67,10 @@ router.post("/", async (req, res) => {
       metrics,
       audio_url,
       audio_notes,
+      recording_url
     });
+
+    console.log('speechData: ', speechData)
 
     // Save the data to the database
     const savedData = await speechData.save();
@@ -82,5 +85,27 @@ router.post("/", async (req, res) => {
     res.status(500).json({ error: "Failed to add speech metrics." });
   }
 });
+
+// Updated API route
+router.get("/:userId/recordings", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const recordings = await SpeechData.find(
+      { user_id: userId, recording_url: { $exists: true, $ne: null } },
+      { recording_url: 1, date_recorded: 1, _id: 0 }
+    ).sort({ date_recorded: -1 });
+
+    if (!recordings.length) {
+      return res.status(404).json({ message: "No recordings found for this user" });
+    }
+
+    console.log('recordings', recordings)
+    res.status(200).json(recordings);
+  } catch (error) {
+    console.error("Error fetching recordings:", error.message);
+    res.status(500).json({ error: "Failed to fetch recordings" });
+  }
+});
+  
 
 module.exports = router;
