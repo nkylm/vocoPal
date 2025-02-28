@@ -30,7 +30,7 @@ router.get("/:patientId", authMiddleware, async (req, res) => {
 });
 
 // POST: Add new thresholds for a specific user
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/:patientId", authMiddleware, async (req, res) => {
   try {
     const {
       volume_min,
@@ -41,6 +41,7 @@ router.post("/", authMiddleware, async (req, res) => {
       speed_max,
     } = req.body;
 
+    const { patientId } = req.params;
     const user_id = req.user;
 
     // Validate required fields
@@ -57,7 +58,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     // Check if thresholds already exist for the user
-    const existingThreshold = await Thresholds.findOne({ user_id });
+    const existingThreshold = await Thresholds.findOne({ user_id: patientId });
 
     if (existingThreshold) {
       // Update the existing thresholds
@@ -77,7 +78,7 @@ router.post("/", authMiddleware, async (req, res) => {
       // Create new thresholds
       const newThreshold = new Thresholds({
         threshold_id: new mongoose.Types.ObjectId(), // Generate a new ObjectId for threshold_id
-        user_id,
+        user_id: patient_id,
         volume_min,
         volume_max,
         pitch_min,

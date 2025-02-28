@@ -70,8 +70,8 @@ const TherapistSettings = () => {
       dataIndex: 'accessLevel',
       key: 'accessLevel',
       render: (level) => (
-        <Tag color={level === 'edit' ? 'blue' : 'orange'}>
-          {level === 'edit' ? 'Can Edit' : 'Can View'}
+        <Tag color={level === 'Can edit' ? 'blue' : 'orange'}>
+          {level === 'Can edit' ? 'Can Edit' : 'Can View'}
         </Tag>
       )
     }
@@ -102,7 +102,7 @@ const TherapistSettings = () => {
               <ThresholdTable
                 patientId={selectedPatient}
                 readOnly={
-                  patients.find((p) => p.userId._id === selectedPatient)?.accessLevel !== 'edit'
+                  patients.find((p) => p.userId._id === selectedPatient)?.accessLevel !== 'Can edit'
                 }
               />
             </>
