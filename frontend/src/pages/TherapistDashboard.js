@@ -41,7 +41,7 @@ const TherapistDashboard = () => {
 
         setPatients(patientsWithAccess);
 
-        console.log('patientsWithAccess', patientsWithAccess)
+        console.log('patientsWithAccess', patientsWithAccess);
         if (patientsWithAccess.length > 0) {
           const firstPatient = patientsWithAccess[0];
           setSelectedPatient(firstPatient.userId._id);
@@ -132,9 +132,9 @@ const TherapistDashboard = () => {
     setSelectedPatient(patientId);
     setSpeechData([]); // Clear previous patient's data
     setSelectedDate(null);
-    
+
     // Update recordings access status for the selected patient
-    const selectedPatientData = patients.find(p => p.userId._id === patientId);
+    const selectedPatientData = patients.find((p) => p.userId._id === patientId);
     if (selectedPatientData) {
       setHasRecordingsAccess(selectedPatientData.recordings || false);
     } else {
@@ -229,7 +229,7 @@ const TherapistDashboard = () => {
               {/* Conditionally render RecordingsList based on permissions */}
               {hasRecordingsAccess && selectedPatient && (
                 <Card className="mb-6">
-                  <RecordingsList userId={selectedPatient} /> 
+                  <RecordingsList userId={selectedPatient} />
                 </Card>
               )}
 

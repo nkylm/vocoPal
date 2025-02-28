@@ -193,12 +193,11 @@ const ThresholdTable = ({ patientId, readOnly }) => {
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={3}>Target Range Tolerance</Title>
       <Table columns={columns} dataSource={data} pagination={false} bordered size="middle" />
-      <Button 
-        type="primary" 
-        style={{ marginTop: 16 }} 
-        onClick={handleSave} 
+      <Button
+        type="primary"
+        style={{ marginTop: 16 }}
+        onClick={handleSave}
         loading={loading}
         disabled={readOnly}
       >

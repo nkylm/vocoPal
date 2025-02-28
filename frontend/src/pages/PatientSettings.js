@@ -4,13 +4,9 @@ import TopNavBar from '../components/TopNavBar';
 import './PatientDashboard.css';
 import ThresholdTable from '../components/ThresholdTable';
 import PermissionsTable from '../components/PermissionsTable';
-import ShareModal from '../components/ShareModal';
-import { Button } from 'antd';
-import { ShareAltOutlined } from '@ant-design/icons';
 import './PatientSettings.css';
 
 const PatientSettings = () => {
-  const [shareModalVisible, setShareModalVisible] = useState(false);
   const [permissionsKey, setPermissionsKey] = useState(0); // Used to force re-render of PermissionsTable
 
   const handleShareSuccess = () => {
@@ -20,32 +16,25 @@ const PatientSettings = () => {
 
   return (
     <div className="dashboard-layout">
-      <SideBar />
+      <div className="sidebar">
+        <SideBar />
+      </div>
       <div className="right-content">
-        <TopNavBar />
+        <TopNavBar onShareSuccess={handleShareSuccess} />
         <div className="content settings-content">
           <div className="settings-header">
             <h1>Settings</h1>
-            <Button
-              type="primary"
-              icon={<ShareAltOutlined />}
-              onClick={() => setShareModalVisible(true)}
-              className="share-button"
-            >
-              Share
-            </Button>
           </div>
 
-          <PermissionsTable key={permissionsKey} />
+          <div className="settings-section">
+            <h2 className="threshold-title">Permissions</h2>
+            <PermissionsTable key={permissionsKey} />
+          </div>
 
-          <h2 className="threshold-title">Target Range Tolerance</h2>
-          <ThresholdTable />
-
-          <ShareModal
-            open={shareModalVisible}
-            onClose={() => setShareModalVisible(false)}
-            onSuccess={handleShareSuccess}
-          />
+          <div className="settings-section">
+            <h2 className="threshold-title">Target Range Tolerance</h2>
+            <ThresholdTable />
+          </div>
         </div>
       </div>
     </div>

@@ -179,7 +179,6 @@ const PermissionsTable = () => {
 
   return (
     <div className="permissions-container">
-      <h2>Permissions</h2>
       <Table
         dataSource={permissions}
         columns={columns}

@@ -16,26 +16,28 @@ const TherapistTopNavBar = () => {
         padding: '0 24px',
         height: '64px',
         lineHeight: '64px',
-        borderBottom: '1px solid #f0f0f0'
+        borderBottom: '1px solid #f0f0f0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between' // Pushes elements to edges
       }}
     >
+      {/* Left side: Menu */}
       <Menu
         mode="horizontal"
         selectedKeys={[location.pathname === '/' ? 'dashboard' : 'settings']}
-        style={{ border: 'none' }}
+        style={{ border: 'none', flex: 1 }}
       >
-        <Menu.Item key="dashboard" onClick={() => navigate('/')} style={{ margin: '0 24px' }}>
+        <Menu.Item key="dashboard" onClick={() => navigate('/')}>
           Dashboard
         </Menu.Item>
-        <Menu.Item
-          key="settings"
-          onClick={() => navigate('/settings')}
-          style={{ margin: '0 24px' }}
-        >
+        <Menu.Item key="settings" onClick={() => navigate('/settings')}>
           Settings
         </Menu.Item>
       </Menu>
-      <div style={{ padding: '0 16px' }}>
+
+      {/* Right side: Profile Dropdown */}
+      <div style={{ marginLeft: 'auto', paddingRight: '16px' }}>
         <ProfileDropdown />
       </div>
     </Header>

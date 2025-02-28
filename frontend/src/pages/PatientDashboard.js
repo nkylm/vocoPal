@@ -111,8 +111,8 @@ const PatientDashboard = () => {
           <div className="mb-6">
             <DatePickerDropdown onDateChange={handleDateChange} />
           </div>
-
           {/* Analytics Cards */}
+          <h2 className="analytics-title">Analytics</h2>
           <Row gutter={[16, 16]} className="mb-6">
             <Col xs={24} sm={12} lg={6}>
               <Card>
@@ -164,9 +164,8 @@ const PatientDashboard = () => {
               </Card>
             </Col>
           </Row>
-
+          <h2 className="recordings-list-title">Recordings</h2>
           <RecordingsList userId={userId} /> {/* Show recordings here */}
-
           {/* Graph Section */}
           <Card className="mb-6">
             {thresholds ? (
