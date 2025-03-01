@@ -131,8 +131,11 @@ const PatientDashboard = () => {
                   suffix="dB"
                   precision={1}
                   valueStyle={{
-                    color:
-                      analytics.avgVolume > (thresholds?.volume_max || 0) ? '#cf1322' : '#3f8600'
+                    color: analytics.avgVolume === 0 
+                    ? 'gray' 
+                    : (analytics.avgVolume > (thresholds?.volume_max || 0) || analytics.avgVolume < (thresholds?.volume_min || 0)) 
+                      ? '#cf1322' 
+                      : '#3f8600'
                   }}
                 />
               </Card>
@@ -145,7 +148,11 @@ const PatientDashboard = () => {
                   suffix="Hz"
                   precision={1}
                   valueStyle={{
-                    color: analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600'
+                    color: analytics.avgPitch === 0 
+                    ? 'gray' 
+                    : (analytics.avgPitch > (thresholds?.pitch_max || 0) || analytics.avgPitch < (thresholds?.pitch_min || 0)) 
+                      ? '#cf1322' 
+                      : '#3f8600'
                   }}
                 />
               </Card>
@@ -155,11 +162,14 @@ const PatientDashboard = () => {
                 <Statistic
                   title="Average Speed"
                   value={analytics.avgSpeed}
-                  suffix="WPM"
+                  suffix="Syll/Sec"
                   precision={1}
                   valueStyle={{
-                    color: analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600'
-                  }}
+                    color: analytics.avgSpeed === 0 
+                    ? 'gray' 
+                    : (analytics.avgSpeed > (thresholds?.speed_max || 0) || analytics.avgPitch < (thresholds?.speed_min || 0)) 
+                      ? '#cf1322' 
+                      : '#3f8600'                  }}
                 />
               </Card>
             </Col>

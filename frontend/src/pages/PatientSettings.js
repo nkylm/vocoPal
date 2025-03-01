@@ -9,6 +9,8 @@ import './PatientSettings.css';
 const PatientSettings = () => {
   const [permissionsKey, setPermissionsKey] = useState(0); // Used to force re-render of PermissionsTable
 
+  const userId = localStorage.getItem('userId');
+
   const handleShareSuccess = () => {
     // Force re-render of PermissionsTable to show updated data
     setPermissionsKey((prevKey) => prevKey + 1);
@@ -33,7 +35,7 @@ const PatientSettings = () => {
 
           <div className="settings-section">
             <h2 className="threshold-title">Target Range Tolerance</h2>
-            <ThresholdTable />
+            <ThresholdTable patientId={userId} readOnly={false}/>
           </div>
         </div>
       </div>

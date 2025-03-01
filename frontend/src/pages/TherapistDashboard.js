@@ -215,7 +215,7 @@ const TherapistDashboard = () => {
                     <Statistic
                       title="Average Speed"
                       value={analytics.avgSpeed}
-                      suffix="WPM"
+                      suffix="Syll/Sec"
                       precision={1}
                       valueStyle={{
                         color:

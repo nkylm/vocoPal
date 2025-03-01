@@ -87,7 +87,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       date_recorded: new Date(),
       metrics:
         {
-          volume: 100, // hard coded for now
+          volume: 65, // hard coded for now
           pitch: response.data.f0_mean,
           speed: response.data.rate_of_speech,
         } || {}, // Ensure metrics are included
