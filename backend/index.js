@@ -70,7 +70,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("s3url", s3Url);
 
     // Send the file to the Python microservice
-    const microserviceUrl = "http://localhost:8001/process";
+    const microserviceUrl = process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
