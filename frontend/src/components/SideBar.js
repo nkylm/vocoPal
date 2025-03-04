@@ -2,10 +2,12 @@ import React from 'react';
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
+import vocalpalLogo from '../util/vocopalLogo.svg';
+import './SideBar.css'; // Make sure this import is included
 
 const items = [
   { key: '/', icon: <HomeOutlined />, label: 'Home', path: '/' },
-  { key: '/settings', icon: <SettingOutlined />, label: 'Settings', path: '/settings' },
+  { key: '/settings', icon: <SettingOutlined />, label: 'Settings', path: '/settings' }
 ];
 
 const SideBar = () => {
@@ -20,16 +22,22 @@ const SideBar = () => {
   };
 
   return (
-    <Menu
-      onClick={onClick}
-      style={{
-        width: 256,
-        height: '100vh',
-      }}
-      selectedKeys={[location.pathname]}
-      mode="inline"
-      items={items.map(({ key, icon, label }) => ({ key, icon, label }))}
-    />
+    <div className="sidebar">
+      <div style={{ padding: '10px', display: 'flex', justifyContent: 'left' }}>
+        <img src={vocalpalLogo} alt="VocoPal" style={{ height: '32px' }} />
+      </div>
+      <Menu
+        onClick={onClick}
+        style={{
+          width: '100%',
+          flex: 1,
+          border: 'none'
+        }}
+        selectedKeys={[location.pathname]}
+        mode="inline"
+        items={items.map(({ key, icon, label }) => ({ key, icon, label }))}
+      />
+    </div>
   );
 };
 

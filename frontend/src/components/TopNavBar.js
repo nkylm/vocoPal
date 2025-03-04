@@ -1,13 +1,15 @@
-import React from 'react';
-import { HomeOutlined, SettingOutlined } from '@ant-design/icons';
-import { Menu } from 'antd';
+import React, { useState } from 'react';
+import { HomeOutlined, SettingOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { Menu, Button } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ProfileDropdown from './ProfileDropdown';
+import ShareModal from './ShareModal';
 
-const TopNavBar = () => {
+const TopNavBar = ({ onShareSuccess }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   // Define menu items based on current path
   const getMenuItems = () => {
@@ -16,17 +18,17 @@ const TopNavBar = () => {
         {
           label: 'Home',
           key: '/',
-          icon: <HomeOutlined />,
+          icon: <HomeOutlined />
         }
       ];
     }
-    
+
     if (currentPath === '/settings') {
       return [
         {
           label: 'Settings',
           key: '/settings',
-          icon: <SettingOutlined />,
+          icon: <SettingOutlined />
         }
       ];
     }
@@ -39,25 +41,41 @@ const TopNavBar = () => {
   };
 
   return (
-    <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        width: '100%',
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #f0f0f0'
-      }}>
-        <Menu 
-          onClick={onClick} 
+    <div className="top-navbar">
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%'
+        }}
+      >
+        <Menu
+          onClick={onClick}
           selectedKeys={[currentPath]}
-          mode="horizontal" 
-          items={getMenuItems()} 
+          mode="horizontal"
+          items={getMenuItems()}
           style={{ flex: 1 }}
         />
-        <div style={{ padding: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Button
+            type="primary"
+            icon={<ShareAltOutlined />}
+            onClick={() => setShareModalVisible(true)}
+            className="share-button"
+          >
+            Share
+          </Button>
           <ProfileDropdown />
         </div>
       </div>
+
+      <ShareModal
+        open={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        onSuccess={onShareSuccess}
+      />
+    </div>
   );
 };
 

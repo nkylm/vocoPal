@@ -7,7 +7,7 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import dayjs from 'dayjs';
@@ -23,30 +23,27 @@ const GraphComponent = ({ speechData, selectedDate, thresholds }) => {
   if (!selectedDate || speechData.length === 0) {
     return <p>Please select a date to view the graph.</p>;
   }
-  console.log('speechData: ', speechData)
-  console.log('thresholds: ', thresholds)
-  console.log('selectedDate: ', selectedDate)
-  
+  console.log('speechData: ', speechData);
+  console.log('thresholds: ', thresholds);
+  console.log('selectedDate: ', selectedDate);
+
   const parsedDate = dayjs(selectedDate, 'MMMM Do, YYYY');
 
+  const dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('YYYY-MM-DD'));
 
-    const dates = Array.from({ length: 7 }, (_, i) =>
-      parsedDate.add(i, 'day').format('YYYY-MM-DD')
-    );
-
-    console.log('dates: ', dates);
+  console.log('dates: ', dates);
 
   // Helper function to calculate percentages within range for a specific metric and date
   const calculatePercentageForMetric = (metric, date) => {
-    console.log('date: ', date)
+    console.log('date: ', date);
     const dataForDate = speechData.filter((entry) =>
-        // console.log(entry)
+      // console.log(entry)
       dayjs(entry.date_recorded).isSame(date, 'day')
     );
 
     if (dataForDate.length === 0) return 0;
 
-    console.log('dataForDate: ', dataForDate)
+    console.log('dataForDate: ', dataForDate);
 
     const withinRangeCount = dataForDate.filter(
       (entry) =>
@@ -73,7 +70,7 @@ const GraphComponent = ({ speechData, selectedDate, thresholds }) => {
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderWidth: 2,
-        fill: false,
+        fill: false
       },
       {
         label: '% Pitch Within Target Range',
@@ -81,7 +78,7 @@ const GraphComponent = ({ speechData, selectedDate, thresholds }) => {
         borderColor: 'rgba(54, 162, 235, 1)',
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderWidth: 2,
-        fill: false,
+        fill: false
       },
       {
         label: '% Speed Within Target Range',
@@ -89,9 +86,9 @@ const GraphComponent = ({ speechData, selectedDate, thresholds }) => {
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderWidth: 2,
-        fill: false,
-      },
-    ],
+        fill: false
+      }
+    ]
   };
 
   return (
@@ -105,18 +102,18 @@ const GraphComponent = ({ speechData, selectedDate, thresholds }) => {
             x: {
               title: {
                 display: true,
-                text: 'Date',
-              },
+                text: 'Date'
+              }
             },
             y: {
               beginAtZero: true,
               max: 100,
               title: {
                 display: true,
-                text: 'Percentage Within Target Range (%)',
-              },
-            },
-          },
+                text: 'Percentage Within Target Range (%)'
+              }
+            }
+          }
         }}
       />
     </div>
