@@ -12,17 +12,27 @@ const SpeechDataSchema = new mongoose.Schema({
     pitch: { type: Number, required: true },
     speed: { type: Number, required: true },
   },
+  thresholds: {
+    volume_min: { type: Number, required: true },
+    volume_max: { type: Number, required: true },
+    pitch_min: { type: Number, required: true },
+    pitch_max: { type: Number, required: true },
+    speed_min: { type: Number, required: true },
+    speed_max: { type: Number, required: true },
+  },
   audio_notes: [
     {
       type: String,
       enum: [
         "fast",
         "slow",
-        "high pitch",
-        "low pitch",
+        "normal-speed",
+        "high-pitch",
+        "low-pitch",
+        "normal-pitch",
         "loud",
         "quiet",
-        "normal",
+        "normal-volume"
       ],
     },
   ],

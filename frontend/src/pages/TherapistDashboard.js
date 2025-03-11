@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Select, Empty } from 'antd';
+import { Card, Row, Col, Statistic, Select, Empty, Tabs } from 'antd';
 import TherapistSideBar from '../components/TherapistSideBar';
 import TherapistTopNavBar from '../components/TherapistTopNavBar';
 import DatePickerDropdown from '../components/DatePickerDropdown';
@@ -142,6 +142,103 @@ const TherapistDashboard = () => {
     }
   };
 
+  const getTabItems = () => {
+    const baseItems = [
+      {
+        key: 'graph',
+        label: 'Graph',
+        children: (
+          <>
+            <div className="mb-6">
+              <DatePickerDropdown onDateChange={handleDateChange} />
+            </div>
+            <Card>
+              {thresholds ? (
+                <Graph speechData={speechData} selectedDate={selectedDate} />
+              ) : (
+                <p>Loading thresholds...</p>
+              )}
+            </Card>
+          </>
+        )
+      },
+      {
+        key: 'analytics',
+        label: 'Analytics',
+        children: (
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Recordings"
+                  value={analytics.totalRecordings}
+                  prefix={<i className="fas fa-microphone" />}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Average Volume"
+                  value={analytics.avgVolume}
+                  suffix="dB"
+                  precision={1}
+                  valueStyle={{
+                    color:
+                      analytics.avgVolume > (thresholds?.volume_max || 0) ? '#cf1322' : '#3f8600'
+                  }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Average Pitch"
+                  value={analytics.avgPitch}
+                  suffix="Hz"
+                  precision={1}
+                  valueStyle={{
+                    color:
+                      analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600'
+                  }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Average Speed"
+                  value={analytics.avgSpeed}
+                  suffix="Syll/Sec"
+                  precision={1}
+                  valueStyle={{
+                    color:
+                      analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600'
+                  }}
+                />
+              </Card>
+            </Col>
+          </Row>
+        )
+      }
+    ];
+
+    // Add either Recordings or Flags tab based on access
+    const thirdTab = hasRecordingsAccess
+      ? {
+          key: 'recordings',
+          label: 'Recordings',
+          children: selectedPatient && <RecordingsList userId={selectedPatient} />
+        }
+      : {
+          key: 'flags',
+          label: 'Flags',
+          children: <Card>Flagged recordings will appear here</Card>
+        };
+
+    return [...baseItems, thirdTab];
+  };
+
   return (
     <div className="dashboard-layout">
       <TherapistSideBar
@@ -165,86 +262,15 @@ const TherapistDashboard = () => {
                 </Option>
               ))}
             </Select>
-            <DatePickerDropdown onDateChange={handleDateChange} />
           </div>
 
           {selectedPatient ? (
-            <>
-              <Row gutter={[16, 16]} className="mb-6">
-                <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Total Recordings"
-                      value={analytics.totalRecordings}
-                      prefix={<i className="fas fa-microphone" />}
-                    />
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Average Volume"
-                      value={analytics.avgVolume}
-                      suffix="dB"
-                      precision={1}
-                      valueStyle={{
-                        color:
-                          analytics.avgVolume > (thresholds?.volume_max || 0)
-                            ? '#cf1322'
-                            : '#3f8600'
-                      }}
-                    />
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Average Pitch"
-                      value={analytics.avgPitch}
-                      suffix="Hz"
-                      precision={1}
-                      valueStyle={{
-                        color:
-                          analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600'
-                      }}
-                    />
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                  <Card>
-                    <Statistic
-                      title="Average Speed"
-                      value={analytics.avgSpeed}
-                      suffix="Syll/Sec"
-                      precision={1}
-                      valueStyle={{
-                        color:
-                          analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600'
-                      }}
-                    />
-                  </Card>
-                </Col>
-              </Row>
-
-              {/* Conditionally render RecordingsList based on permissions */}
-              {hasRecordingsAccess && selectedPatient && (
-                <Card className="mb-6">
-                  <RecordingsList userId={selectedPatient} />
-                </Card>
-              )}
-
-              <Card className="mb-6">
-                {thresholds ? (
-                  <Graph
-                    speechData={speechData}
-                    selectedDate={selectedDate}
-                    thresholds={thresholds}
-                  />
-                ) : (
-                  <p>Loading thresholds...</p>
-                )}
-              </Card>
-            </>
+            <Tabs 
+              defaultActiveKey="graph" 
+              items={getTabItems()}
+              size="large"
+              type="card"
+            />
           ) : (
             <Empty description="Select a patient to view their data" />
           )}
