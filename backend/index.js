@@ -160,7 +160,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("speechDataPayload: ", speechDataPayload);
 
     const speechDataResponse = await axios.post(
-      "http://localhost:8000/api/speechData",
+      `${microserviceUrl}/api/speechData`,
       speechDataPayload,
     );
 
