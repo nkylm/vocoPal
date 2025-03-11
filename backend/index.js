@@ -105,6 +105,8 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
+    console.log('microserviceUrl: ', microserviceUrl);
+
     const response = await axios.post(microserviceUrl, formData, {
       headers: {
         ...formData.getHeaders(),
