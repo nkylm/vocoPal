@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Card, List, Spin, Space, Checkbox, Typography, Row, Col } from 'antd';
 import axios from 'axios';
 import PropTypes from 'prop-types';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
-const RecordingsList = ({ userId }) => {
+const RecordingsList = ({ userId, selectedDate }) => {
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredRecordings, setFilteredRecordings] = useState([]);
@@ -26,12 +27,18 @@ const RecordingsList = ({ userId }) => {
     const fetchRecordings = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(
-          `http://localhost:8000/api/speechData/${userId}/recordings`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
+        
+        // Add date range parameters if selectedDate is provided
+        if (selectedDate) {
+          const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
+          const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+          url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setRecordings(response.data);
       } catch (error) {
         console.error('Error fetching recordings:', error);
@@ -41,7 +48,7 @@ const RecordingsList = ({ userId }) => {
     };
 
     fetchRecordings();
-  }, [userId]);
+  }, [userId, selectedDate]);
 
   useEffect(() => {
     // Filter recordings based on selected filters
@@ -222,7 +229,8 @@ const RecordingsList = ({ userId }) => {
 };
 
 RecordingsList.propTypes = {
-  userId: PropTypes.string.isRequired
+  userId: PropTypes.string.isRequired,
+  selectedDate: PropTypes.string
 };
 
 export default RecordingsList;
