@@ -105,7 +105,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
-    console.log('microserviceUrl: ', microserviceUrl);
+    
 
     const response = await axios.post(microserviceUrl, formData, {
       headers: {
@@ -161,10 +161,14 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
 
     console.log("speechDataPayload: ", speechDataPayload);
 
+    console.log('process.env.BACKEND_HOSTED_URL: ', process.env.BACKEND_HOSTED_URL);
+    
     const speechDataResponse = await axios.post(
-      `${microserviceUrl}/api/speechData`,
+      `${process.env.BACKEND_HOSTED_URL}/api/speechData`,
       speechDataPayload,
     );
+
+    console.log('speechDataResponse: ', speechDataResponse);
 
     // Delete the local file after processing
     fs.unlinkSync(audioFilePath);
