@@ -114,7 +114,7 @@ def analyze_audio_file():
     fluctuation, chunk_rates = calculate_speech_rate_fluctuation(output_path)
     
     # Create dictionary with original features
-    json_dict = dict(zip(features[:-1], z5_single))  # Exclude the last feature (speech_rate_fluctuation)
+    json_dict = dict(zip(features[:-2], z5_single))  # Exclude the last two features (speech_rate_fluctuation and pitch_fluctuation)
     
     # Add speech rate fluctuation
     json_dict["speech_rate_fluctuation"] = float(fluctuation)
