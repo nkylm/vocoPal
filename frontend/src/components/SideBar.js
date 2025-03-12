@@ -3,7 +3,7 @@ import { HomeOutlined, SettingOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import vocalpalLogo from '../util/vocopalLogo.svg';
-import './SideBar.css'; // Make sure this import is included
+import './SideBar.css';
 
 const items = [
   { key: '/', icon: <HomeOutlined />, label: 'Home', path: '/' },
@@ -23,7 +23,14 @@ const SideBar = () => {
 
   return (
     <div className="sidebar">
-      <div style={{ padding: '10px', display: 'flex', justifyContent: 'left' }}>
+      <div
+        style={{
+          padding: '10px',
+          display: 'flex',
+          justifyContent: 'left',
+          backgroundColor: '#ffffff' // Add this line
+        }}
+      >
         <img src={vocalpalLogo} alt="VocoPal" style={{ height: '32px' }} />
       </div>
       <Menu
@@ -31,7 +38,8 @@ const SideBar = () => {
         style={{
           width: '100%',
           flex: 1,
-          border: 'none'
+          border: 'none',
+          backgroundColor: '#ffffff' // Add this line
         }}
         selectedKeys={[location.pathname]}
         mode="inline"

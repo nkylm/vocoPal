@@ -82,3 +82,62 @@
   font-size: 18px;
   font-weight: 500;
 }
+
+.metric-card {
+  height: 100%;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-icon {
+  font-size: 20px;
+}
+
+.metric-content {
+  display: flex;
+  gap: 16px;
+  height: calc(100% - 48px);
+}
+
+.metric-main {
+  display: flex;
+  gap: 16px;
+}
+
+.metric-percentage {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.metric-percentage h2.ant-typography {
+  margin: 0;
+  color: #1e1e1e;
+}
+
+.metric-comparison {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.metric-ranges {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.metric-ranges > div {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, List, Spin, Space, Checkbox, Typography, Row, Col } from 'antd';
+import { Card, List, Spin, Space, Checkbox, Typography, Row, Col, Empty } from 'antd';
 import axios from 'axios';
 import PropTypes from 'prop-types';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
-const RecordingsList = ({ userId }) => {
+const RecordingsList = ({ userId, selectedDate }) => {
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredRecordings, setFilteredRecordings] = useState([]);
@@ -24,24 +25,35 @@ const RecordingsList = ({ userId }) => {
 
   useEffect(() => {
     const fetchRecordings = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(
-          `http://localhost:8000/api/speechData/${userId}/recordings`,
-          {
+        let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
+
+        // Only fetch recordings if a date is selected
+        if (selectedDate) {
+          const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
+          const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+          url += `?startDate=${startDate}&endDate=${endDate}`;
+
+          const response = await axios.get(url, {
             headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-        setRecordings(response.data);
+          });
+          setRecordings(response.data);
+        } else {
+          // If no date is selected, show no recordings
+          setRecordings([]);
+        }
       } catch (error) {
         console.error('Error fetching recordings:', error);
+        setRecordings([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecordings();
-  }, [userId]);
+  }, [userId, selectedDate]);
 
   useEffect(() => {
     // Filter recordings based on selected filters
@@ -228,17 +240,30 @@ const RecordingsList = ({ userId }) => {
       <FilterSection />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
         <Title level={4}>Flagged recordings</Title>
-        <span>
-          Showing {filteredRecordings.length} of {recordings.length}
-        </span>
+        {selectedDate ? (
+          <span>
+            Showing {filteredRecordings.length} of {recordings.length}
+          </span>
+        ) : (
+          <span>Please select a date to view recordings</span>
+        )}
       </div>
-      <List dataSource={filteredRecordings} renderItem={renderRecordingCard} />
+      {selectedDate ? (
+        <List
+          dataSource={filteredRecordings}
+          renderItem={renderRecordingCard}
+          locale={{ emptyText: 'No recordings found for the selected week' }}
+        />
+      ) : (
+        <Empty description="Select a date to view recordings" />
+      )}
     </div>
   );
 };
 
 RecordingsList.propTypes = {
-  userId: PropTypes.string.isRequired
+  userId: PropTypes.string.isRequired,
+  selectedDate: PropTypes.string
 };
 
 export default RecordingsList;
