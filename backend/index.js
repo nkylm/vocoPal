@@ -39,7 +39,7 @@ const s3 = new S3Client({
 // Helper function to determine audio notes based on metrics and thresholds
 const getAudioNotes = (metrics, thresholds) => {
   const notes = [];
-  
+
   // Volume checks
   if (metrics.volume > thresholds.volume_max) {
     notes.push("loud");
@@ -66,19 +66,47 @@ const getAudioNotes = (metrics, thresholds) => {
   } else {
     notes.push("normal-speed");
   }
-  
+
   return notes;
 };
 
 // Helper function to check if metrics are outside thresholds
 const isOutsideThresholds = (metrics, thresholds) => {
-  return metrics.volume > thresholds.volume_max ||
-         metrics.volume < thresholds.volume_min ||
-         metrics.pitch > thresholds.pitch_max ||
-         metrics.pitch < thresholds.pitch_min ||
-         metrics.speed > thresholds.speed_max ||
-         metrics.speed < thresholds.speed_min;
+  return (
+    metrics.volume > thresholds.volume_max ||
+    metrics.volume < thresholds.volume_min ||
+    metrics.pitch > thresholds.pitch_max ||
+    metrics.pitch < thresholds.pitch_min ||
+    metrics.speed > thresholds.speed_max ||
+    metrics.speed < thresholds.speed_min
+  );
 };
+
+async function calculateFileChecksum(filePath) {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = fs.createReadStream(filePath);
+      let checksum = 0;
+
+      stream.on("data", (chunk) => {
+        // Use the same algorithm as the ESP32 for consistency
+        for (let i = 0; i < chunk.length; i++) {
+          checksum = ((checksum << 1) | (checksum >> 31)) + chunk[i]; // Rotate and add
+        }
+      });
+
+      stream.on("end", () => {
+        resolve(checksum.toString(16)); // Convert to hex string
+      });
+
+      stream.on("error", (error) => {
+        reject(error);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 // Endpoint to upload an audio file
 app.post("/api/upload", upload.single("audio"), async (req, res) => {
@@ -88,7 +116,42 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    console.log('req: ', req)
+    console.log("req: ", req.file);
+
+    // Get checksum from header or form field
+    const expectedChecksum =
+      req.headers["x-file-checksum"] || req.body.checksum;
+
+    if (!expectedChecksum) {
+      console.log("No checksum provided");
+      // You can choose to continue or return an error
+      // return res.status(400).json({ error: "No checksum provided" });
+    } else {
+      console.log("Expected checksum:", expectedChecksum);
+
+      // Calculate checksum on the server side
+      const actualChecksum = await calculateFileChecksum(req.file.path);
+      console.log("Actual checksum:", actualChecksum);
+
+      // Verify checksum (if provided)
+      if (
+        expectedChecksum &&
+        expectedChecksum.toLowerCase() !== actualChecksum.toLowerCase()
+      ) {
+        console.error("Checksum mismatch!");
+        console.error(
+          `Expected: ${expectedChecksum}, Actual: ${actualChecksum}`,
+        );
+        return res.status(400).json({
+          error:
+            "File integrity check failed. The uploaded file may be corrupted.",
+          expected: expectedChecksum,
+          actual: actualChecksum,
+        });
+      }
+
+      console.log("Checksum verification passed");
+    }
 
     const audioFilePath = req.file.path;
     const audioFileName = req.file.originalname;
@@ -103,12 +166,13 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("userThresholds: ", userThresholds);
 
     // Send the file to the Python microservice
-    const microserviceUrl = process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
+    const microserviceUrl =
+      process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
-    console.log('microserviceUrl: ', microserviceUrl);
-    console.log('formData: ', formData);
+    console.log("microserviceUrl: ", microserviceUrl);
+    console.log("formData: ", formData);
 
     const response = await axios.post(microserviceUrl, formData, {
       headers: {
@@ -116,7 +180,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       },
     });
 
-    console.log('response: ', response.data)
+    console.log("response: ", response.data);
 
     // Prepare metrics
     const metrics = {
@@ -164,14 +228,17 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
 
     console.log("speechDataPayload: ", speechDataPayload);
 
-    console.log('process.env.BACKEND_HOSTED_URL: ', process.env.BACKEND_HOSTED_URL);
+    console.log(
+      "process.env.BACKEND_HOSTED_URL: ",
+      process.env.BACKEND_HOSTED_URL,
+    );
 
     const speechDataResponse = await axios.post(
       `${process.env.BACKEND_HOSTED_URL}/api/speechData`,
       speechDataPayload,
     );
 
-    console.log('speechDataResponse: ', speechDataResponse);
+    console.log("speechDataResponse: ", speechDataResponse);
 
     // Delete the local file after processing
     fs.unlinkSync(audioFilePath);

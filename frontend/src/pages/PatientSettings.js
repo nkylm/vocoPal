@@ -35,7 +35,7 @@ const PatientSettings = () => {
 
           <div className="settings-section">
             <h2 className="threshold-title">Target Range Tolerance</h2>
-            <ThresholdTable patientId={userId} readOnly={false}/>
+            <ThresholdTable patientId={userId} readOnly={false} />
           </div>
         </div>
       </div>

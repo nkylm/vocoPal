@@ -70,16 +70,24 @@ router.post("/", async (req, res) => {
 
     // Validate audio_notes format
     const validNotes = [
-      "fast", "slow", "normal-speed",
-      "high-pitch", "low-pitch", "normal-pitch",
-      "loud", "quiet", "normal-volume"
+      "fast",
+      "slow",
+      "normal-speed",
+      "high-pitch",
+      "low-pitch",
+      "normal-pitch",
+      "loud",
+      "quiet",
+      "normal-volume",
     ];
 
-    const invalidNotes = audio_notes.filter(note => !validNotes.includes(note));
+    const invalidNotes = audio_notes.filter(
+      (note) => !validNotes.includes(note),
+    );
     if (invalidNotes.length > 0) {
       return res.status(400).json({
         error: `Invalid audio notes: ${invalidNotes.join(", ")}`,
-        validNotes
+        validNotes,
       });
     }
 

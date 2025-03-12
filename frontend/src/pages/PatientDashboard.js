@@ -134,11 +134,13 @@ const PatientDashboard = () => {
                 suffix="dB"
                 precision={1}
                 valueStyle={{
-                  color: analytics.avgVolume === 0 
-                  ? 'gray' 
-                  : (analytics.avgVolume > (thresholds?.volume_max || 0) || analytics.avgVolume < (thresholds?.volume_min || 0)) 
-                    ? '#cf1322' 
-                    : '#3f8600'
+                  color:
+                    analytics.avgVolume === 0
+                      ? 'gray'
+                      : analytics.avgVolume > (thresholds?.volume_max || 0) ||
+                          analytics.avgVolume < (thresholds?.volume_min || 0)
+                        ? '#cf1322'
+                        : '#3f8600'
                 }}
               />
             </Card>
@@ -151,11 +153,13 @@ const PatientDashboard = () => {
                 suffix="Hz"
                 precision={1}
                 valueStyle={{
-                  color: analytics.avgPitch === 0 
-                  ? 'gray' 
-                  : (analytics.avgPitch > (thresholds?.pitch_max || 0) || analytics.avgPitch < (thresholds?.pitch_min || 0)) 
-                    ? '#cf1322' 
-                    : '#3f8600'
+                  color:
+                    analytics.avgPitch === 0
+                      ? 'gray'
+                      : analytics.avgPitch > (thresholds?.pitch_max || 0) ||
+                          analytics.avgPitch < (thresholds?.pitch_min || 0)
+                        ? '#cf1322'
+                        : '#3f8600'
                 }}
               />
             </Card>
@@ -168,11 +172,13 @@ const PatientDashboard = () => {
                 suffix="Syll/Sec"
                 precision={1}
                 valueStyle={{
-                  color: analytics.avgSpeed === 0 
-                  ? 'gray' 
-                  : (analytics.avgSpeed > (thresholds?.speed_max || 0) || analytics.avgPitch < (thresholds?.speed_min || 0)) 
-                    ? '#cf1322' 
-                    : '#3f8600'
+                  color:
+                    analytics.avgSpeed === 0
+                      ? 'gray'
+                      : analytics.avgSpeed > (thresholds?.speed_max || 0) ||
+                          analytics.avgPitch < (thresholds?.speed_min || 0)
+                        ? '#cf1322'
+                        : '#3f8600'
                 }}
               />
             </Card>
@@ -193,12 +199,7 @@ const PatientDashboard = () => {
       <div className="right-content">
         <TopNavBar />
         <div className="content p-6">
-          <Tabs 
-            defaultActiveKey="graph" 
-            items={items}
-            size="large"
-            type="card"
-          />
+          <Tabs defaultActiveKey="graph" items={items} size="large" type="card" />
         </div>
       </div>
     </div>

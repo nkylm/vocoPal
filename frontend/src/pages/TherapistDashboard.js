@@ -198,8 +198,7 @@ const TherapistDashboard = () => {
                   suffix="Hz"
                   precision={1}
                   valueStyle={{
-                    color:
-                      analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600'
+                    color: analytics.avgPitch > (thresholds?.pitch_max || 0) ? '#cf1322' : '#3f8600'
                   }}
                 />
               </Card>
@@ -212,8 +211,7 @@ const TherapistDashboard = () => {
                   suffix="Syll/Sec"
                   precision={1}
                   valueStyle={{
-                    color:
-                      analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600'
+                    color: analytics.avgSpeed > (thresholds?.speed_max || 0) ? '#cf1322' : '#3f8600'
                   }}
                 />
               </Card>
@@ -265,12 +263,7 @@ const TherapistDashboard = () => {
           </div>
 
           {selectedPatient ? (
-            <Tabs 
-              defaultActiveKey="graph" 
-              items={getTabItems()}
-              size="large"
-              type="card"
-            />
+            <Tabs defaultActiveKey="graph" items={getTabItems()} size="large" type="card" />
           ) : (
             <Empty description="Select a patient to view their data" />
           )}

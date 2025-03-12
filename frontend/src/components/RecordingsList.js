@@ -46,23 +46,31 @@ const RecordingsList = ({ userId }) => {
   useEffect(() => {
     // Filter recordings based on selected filters
     const filterRecordings = () => {
-      return recordings.filter(recording => {
+      return recordings.filter((recording) => {
         const notes = recording.audio_notes;
-        
-        // Check if any of the enabled filters match the recording's notes
-        const matchesSpeechMetric = (
-          (filters.volumeLevel && (notes.includes('loud') || notes.includes('quiet') || notes.includes('normal-volume'))) ||
-          (filters.pitchLevel && (notes.includes('high-pitch') || notes.includes('low-pitch') || notes.includes('normal-pitch'))) ||
-          (filters.speedLevel && (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
-          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
-          (filters.pitchFluctuation && (notes.includes('volatile') || notes.includes('monotone'))) ||
-          (filters.speedFluctuation && notes.includes('speed-fluctuation'))
-        );
 
-        const matchesTargetRange = (
-          (filters.aboveTargetRange && (notes.includes('loud') || notes.includes('high-pitch') || notes.includes('fast'))) ||
-          (filters.belowTargetRange && (notes.includes('quiet') || notes.includes('low-pitch') || notes.includes('slow')))
-        );
+        // Check if any of the enabled filters match the recording's notes
+        const matchesSpeechMetric =
+          (filters.volumeLevel &&
+            (notes.includes('loud') ||
+              notes.includes('quiet') ||
+              notes.includes('normal-volume'))) ||
+          (filters.pitchLevel &&
+            (notes.includes('high-pitch') ||
+              notes.includes('low-pitch') ||
+              notes.includes('normal-pitch'))) ||
+          (filters.speedLevel &&
+            (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
+          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
+          (filters.pitchFluctuation &&
+            (notes.includes('volatile') || notes.includes('monotone'))) ||
+          (filters.speedFluctuation && notes.includes('speed-fluctuation'));
+
+        const matchesTargetRange =
+          (filters.aboveTargetRange &&
+            (notes.includes('loud') || notes.includes('high-pitch') || notes.includes('fast'))) ||
+          (filters.belowTargetRange &&
+            (notes.includes('quiet') || notes.includes('low-pitch') || notes.includes('slow')));
 
         return matchesSpeechMetric && matchesTargetRange;
       });
@@ -72,7 +80,7 @@ const RecordingsList = ({ userId }) => {
   }, [recordings, filters]);
 
   const handleFilterChange = (filterName) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [filterName]: !prev[filterName]
     }));
@@ -181,10 +189,19 @@ const RecordingsList = ({ userId }) => {
                 padding: '4px 8px',
                 marginRight: '8px',
                 borderRadius: '4px',
-                backgroundColor: badge.type === 'Volume' ? '#e6f7ff' : 
-                               badge.type === 'Pitch' ? '#fff7e6' : '#f6ffed',
-                border: `1px solid ${badge.type === 'Volume' ? '#91d5ff' : 
-                                   badge.type === 'Pitch' ? '#ffd591' : '#b7eb8f'}`,
+                backgroundColor:
+                  badge.type === 'Volume'
+                    ? '#e6f7ff'
+                    : badge.type === 'Pitch'
+                      ? '#fff7e6'
+                      : '#f6ffed',
+                border: `1px solid ${
+                  badge.type === 'Volume'
+                    ? '#91d5ff'
+                    : badge.type === 'Pitch'
+                      ? '#ffd591'
+                      : '#b7eb8f'
+                }`
               }}
             >
               {`${badge.type}: ${badge.value}`}
@@ -211,12 +228,11 @@ const RecordingsList = ({ userId }) => {
       <FilterSection />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
         <Title level={4}>Flagged recordings</Title>
-        <span>Showing {filteredRecordings.length} of {recordings.length}</span>
+        <span>
+          Showing {filteredRecordings.length} of {recordings.length}
+        </span>
       </div>
-      <List
-        dataSource={filteredRecordings}
-        renderItem={renderRecordingCard}
-      />
+      <List dataSource={filteredRecordings} renderItem={renderRecordingCard} />
     </div>
   );
 };

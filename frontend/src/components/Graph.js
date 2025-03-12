@@ -64,8 +64,8 @@ const GraphComponent = ({ speechData, selectedDate }) => {
       speed: 0
     };
 
-    Object.keys(metrics).forEach(metric => {
-      const matchingEntries = dataForDate.filter(entry => 
+    Object.keys(metrics).forEach((metric) => {
+      const matchingEntries = dataForDate.filter((entry) =>
         getMetricStatus(entry.audio_notes, metric)
       ).length;
       metrics[metric] = (matchingEntries / dataForDate.length) * 100;
@@ -75,29 +75,29 @@ const GraphComponent = ({ speechData, selectedDate }) => {
   };
 
   // Calculate percentages for all dates
-  const percentages = dates.map(date => calculatePercentages(date, displayMode));
+  const percentages = dates.map((date) => calculatePercentages(date, displayMode));
 
   // Prepare chart data
   const chartData = {
-    labels: dates.map(date => dayjs(date).format('D')),
+    labels: dates.map((date) => dayjs(date).format('D')),
     datasets: [
       {
         label: 'Volume',
-        data: percentages.map(p => p.volume),
+        data: percentages.map((p) => p.volume),
         borderColor: '#36A2EB',
         backgroundColor: '#36A2EB',
         tension: 0.4
       },
       {
         label: 'Pitch',
-        data: percentages.map(p => p.pitch),
+        data: percentages.map((p) => p.pitch),
         borderColor: '#FF9F40',
         backgroundColor: '#FF9F40',
         tension: 0.4
       },
       {
         label: 'Speed',
-        data: percentages.map(p => p.speed),
+        data: percentages.map((p) => p.speed),
         borderColor: '#4BC0C0',
         backgroundColor: '#4BC0C0',
         tension: 0.4
@@ -113,10 +113,17 @@ const GraphComponent = ({ speechData, selectedDate }) => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}
+      >
         <h2>{titles[displayMode]}</h2>
-        <Radio.Group 
-          value={displayMode} 
+        <Radio.Group
+          value={displayMode}
           onChange={(e) => setDisplayMode(e.target.value)}
           buttonStyle="solid"
         >
@@ -160,7 +167,7 @@ GraphComponent.propTypes = {
   speechData: PropTypes.arrayOf(
     PropTypes.shape({
       date_recorded: PropTypes.string.isRequired,
-      audio_notes: PropTypes.arrayOf(PropTypes.string).isRequired,
+      audio_notes: PropTypes.arrayOf(PropTypes.string).isRequired
     })
   ).isRequired,
   selectedDate: PropTypes.string
