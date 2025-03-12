@@ -88,6 +88,8 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    console.log('req: ', req)
+
     const audioFilePath = req.file.path;
     const audioFileName = req.file.originalname;
     const userId = "67b401b7550a00da2009bc32"; // hard coded for now
