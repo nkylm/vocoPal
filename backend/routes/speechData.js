@@ -32,6 +32,8 @@ router.get("/:patientId", authMiddleware, async (req, res) => {
     // Query the database
     const speechData = await SpeechData.find(query).sort({ date_recorded: -1 });
 
+    console.log("speechData: ", speechData);
+
     if (!speechData.length) {
       return res
         .status(404)

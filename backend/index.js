@@ -82,12 +82,75 @@ const isOutsideThresholds = (metrics, thresholds) => {
   );
 };
 
+async function calculateFileChecksum(filePath) {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = fs.createReadStream(filePath);
+      let checksum = 0;
+
+      stream.on("data", (chunk) => {
+        // Use the same algorithm as the ESP32 for consistency
+        for (let i = 0; i < chunk.length; i++) {
+          checksum = ((checksum << 1) | (checksum >> 31)) + chunk[i]; // Rotate and add
+        }
+      });
+
+      stream.on("end", () => {
+        resolve(checksum.toString(16)); // Convert to hex string
+      });
+
+      stream.on("error", (error) => {
+        reject(error);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 // Endpoint to upload an audio file
 app.post("/api/upload", upload.single("audio"), async (req, res) => {
   try {
     // Ensure file was uploaded
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    console.log("req: ", req.file);
+
+    // Get checksum from header or form field
+    const expectedChecksum =
+      req.headers["x-file-checksum"] || req.body.checksum;
+
+    if (!expectedChecksum) {
+      console.log("No checksum provided");
+      // You can choose to continue or return an error
+      // return res.status(400).json({ error: "No checksum provided" });
+    } else {
+      console.log("Expected checksum:", expectedChecksum);
+
+      // Calculate checksum on the server side
+      const actualChecksum = await calculateFileChecksum(req.file.path);
+      console.log("Actual checksum:", actualChecksum);
+
+      // Verify checksum (if provided)
+      if (
+        expectedChecksum &&
+        expectedChecksum.toLowerCase() !== actualChecksum.toLowerCase()
+      ) {
+        console.error("Checksum mismatch!");
+        console.error(
+          `Expected: ${expectedChecksum}, Actual: ${actualChecksum}`,
+        );
+        return res.status(400).json({
+          error:
+            "File integrity check failed. The uploaded file may be corrupted.",
+          expected: expectedChecksum,
+          actual: actualChecksum,
+        });
+      }
+
+      console.log("Checksum verification passed");
     }
 
     const audioFilePath = req.file.path;
@@ -107,6 +170,9 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
+
+    console.log("microserviceUrl: ", microserviceUrl);
+    console.log("formData: ", formData);
 
     const response = await axios.post(microserviceUrl, formData, {
       headers: {
@@ -162,10 +228,17 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
 
     console.log("speechDataPayload: ", speechDataPayload);
 
+    console.log(
+      "process.env.BACKEND_HOSTED_URL: ",
+      process.env.BACKEND_HOSTED_URL,
+    );
+
     const speechDataResponse = await axios.post(
-      "http://localhost:8000/api/speechData",
+      `${process.env.BACKEND_HOSTED_URL}/api/speechData`,
       speechDataPayload,
     );
+
+    console.log("speechDataResponse: ", speechDataResponse);
 
     // Delete the local file after processing
     fs.unlinkSync(audioFilePath);
