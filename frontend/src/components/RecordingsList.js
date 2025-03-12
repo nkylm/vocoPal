@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, List, Spin, Space, Checkbox, Typography, Row, Col } from 'antd';
+import { Card, List, Spin, Space, Checkbox, Typography, Row, Col, Empty } from 'antd';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
@@ -25,23 +25,28 @@ const RecordingsList = ({ userId, selectedDate }) => {
 
   useEffect(() => {
     const fetchRecordings = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem('token');
         let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
-        
-        // Add date range parameters if selectedDate is provided
+
+        // Only fetch recordings if a date is selected
         if (selectedDate) {
           const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
           const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
           url += `?startDate=${startDate}&endDate=${endDate}`;
-        }
 
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setRecordings(response.data);
+          const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setRecordings(response.data);
+        } else {
+          // If no date is selected, show no recordings
+          setRecordings([]);
+        }
       } catch (error) {
         console.error('Error fetching recordings:', error);
+        setRecordings([]);
       } finally {
         setLoading(false);
       }
@@ -53,23 +58,31 @@ const RecordingsList = ({ userId, selectedDate }) => {
   useEffect(() => {
     // Filter recordings based on selected filters
     const filterRecordings = () => {
-      return recordings.filter(recording => {
+      return recordings.filter((recording) => {
         const notes = recording.audio_notes;
-        
-        // Check if any of the enabled filters match the recording's notes
-        const matchesSpeechMetric = (
-          (filters.volumeLevel && (notes.includes('loud') || notes.includes('quiet') || notes.includes('normal-volume'))) ||
-          (filters.pitchLevel && (notes.includes('high-pitch') || notes.includes('low-pitch') || notes.includes('normal-pitch'))) ||
-          (filters.speedLevel && (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
-          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
-          (filters.pitchFluctuation && (notes.includes('volatile') || notes.includes('monotone'))) ||
-          (filters.speedFluctuation && notes.includes('speed-fluctuation'))
-        );
 
-        const matchesTargetRange = (
-          (filters.aboveTargetRange && (notes.includes('loud') || notes.includes('high-pitch') || notes.includes('fast'))) ||
-          (filters.belowTargetRange && (notes.includes('quiet') || notes.includes('low-pitch') || notes.includes('slow')))
-        );
+        // Check if any of the enabled filters match the recording's notes
+        const matchesSpeechMetric =
+          (filters.volumeLevel &&
+            (notes.includes('loud') ||
+              notes.includes('quiet') ||
+              notes.includes('normal-volume'))) ||
+          (filters.pitchLevel &&
+            (notes.includes('high-pitch') ||
+              notes.includes('low-pitch') ||
+              notes.includes('normal-pitch'))) ||
+          (filters.speedLevel &&
+            (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
+          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
+          (filters.pitchFluctuation &&
+            (notes.includes('volatile') || notes.includes('monotone'))) ||
+          (filters.speedFluctuation && notes.includes('speed-fluctuation'));
+
+        const matchesTargetRange =
+          (filters.aboveTargetRange &&
+            (notes.includes('loud') || notes.includes('high-pitch') || notes.includes('fast'))) ||
+          (filters.belowTargetRange &&
+            (notes.includes('quiet') || notes.includes('low-pitch') || notes.includes('slow')));
 
         return matchesSpeechMetric && matchesTargetRange;
       });
@@ -79,7 +92,7 @@ const RecordingsList = ({ userId, selectedDate }) => {
   }, [recordings, filters]);
 
   const handleFilterChange = (filterName) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [filterName]: !prev[filterName]
     }));
@@ -188,10 +201,19 @@ const RecordingsList = ({ userId, selectedDate }) => {
                 padding: '4px 8px',
                 marginRight: '8px',
                 borderRadius: '4px',
-                backgroundColor: badge.type === 'Volume' ? '#e6f7ff' : 
-                               badge.type === 'Pitch' ? '#fff7e6' : '#f6ffed',
-                border: `1px solid ${badge.type === 'Volume' ? '#91d5ff' : 
-                                   badge.type === 'Pitch' ? '#ffd591' : '#b7eb8f'}`,
+                backgroundColor:
+                  badge.type === 'Volume'
+                    ? '#e6f7ff'
+                    : badge.type === 'Pitch'
+                      ? '#fff7e6'
+                      : '#f6ffed',
+                border: `1px solid ${
+                  badge.type === 'Volume'
+                    ? '#91d5ff'
+                    : badge.type === 'Pitch'
+                      ? '#ffd591'
+                      : '#b7eb8f'
+                }`
               }}
             >
               {`${badge.type}: ${badge.value}`}
@@ -218,12 +240,23 @@ const RecordingsList = ({ userId, selectedDate }) => {
       <FilterSection />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
         <Title level={4}>Flagged recordings</Title>
-        <span>Showing {filteredRecordings.length} of {recordings.length}</span>
+        {selectedDate ? (
+          <span>
+            Showing {filteredRecordings.length} of {recordings.length}
+          </span>
+        ) : (
+          <span>Please select a date to view recordings</span>
+        )}
       </div>
-      <List
-        dataSource={filteredRecordings}
-        renderItem={renderRecordingCard}
-      />
+      {selectedDate ? (
+        <List
+          dataSource={filteredRecordings}
+          renderItem={renderRecordingCard}
+          locale={{ emptyText: 'No recordings found for the selected week' }}
+        />
+      ) : (
+        <Empty description="Select a date to view recordings" />
+      )}
     </div>
   );
 };

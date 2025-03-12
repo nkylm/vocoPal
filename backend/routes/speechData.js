@@ -68,16 +68,24 @@ router.post("/", async (req, res) => {
 
     // Validate audio_notes format
     const validNotes = [
-      "fast", "slow", "normal-speed",
-      "high-pitch", "low-pitch", "normal-pitch",
-      "loud", "quiet", "normal-volume"
+      "fast",
+      "slow",
+      "normal-speed",
+      "high-pitch",
+      "low-pitch",
+      "normal-pitch",
+      "loud",
+      "quiet",
+      "normal-volume",
     ];
 
-    const invalidNotes = audio_notes.filter(note => !validNotes.includes(note));
+    const invalidNotes = audio_notes.filter(
+      (note) => !validNotes.includes(note),
+    );
     if (invalidNotes.length > 0) {
       return res.status(400).json({
         error: `Invalid audio notes: ${invalidNotes.join(", ")}`,
-        validNotes
+        validNotes,
       });
     }
 
@@ -107,19 +115,43 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Updated API route
+// Updated API route to include date filtering
 router.get("/:userId/recordings", async (req, res) => {
   try {
     const { userId } = req.params;
-    const recordings = await SpeechData.find(
-      { user_id: userId, recording_url: { $exists: true, $ne: null } },
-      { recording_url: 1, date_recorded: 1, audio_notes: 1, _id: 0 },
-    ).sort({ date_recorded: -1 });
+    const { startDate, endDate } = req.query;
+
+    // Build the query object
+    const query = {
+      user_id: userId,
+      recording_url: { $exists: true, $ne: null },
+    };
+
+    // Add date filter if startDate or endDate is provided
+    if (startDate || endDate) {
+      query.date_recorded = {};
+      if (startDate) {
+        query.date_recorded.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        query.date_recorded.$lte = new Date(endDate);
+      }
+    }
+
+    const recordings = await SpeechData.find(query, {
+      recording_url: 1,
+      date_recorded: 1,
+      audio_notes: 1,
+      _id: 0,
+    }).sort({ date_recorded: -1 });
 
     if (!recordings.length) {
       return res
         .status(404)
-        .json({ message: "No recordings found for this user" });
+        .json({
+          message:
+            "No recordings found for this user in the specified date range",
+        });
     }
 
     console.log("recordings", recordings);

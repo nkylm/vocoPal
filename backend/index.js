@@ -39,7 +39,7 @@ const s3 = new S3Client({
 // Helper function to determine audio notes based on metrics and thresholds
 const getAudioNotes = (metrics, thresholds) => {
   const notes = [];
-  
+
   // Volume checks
   if (metrics.volume > thresholds.volume_max) {
     notes.push("loud");
@@ -66,18 +66,20 @@ const getAudioNotes = (metrics, thresholds) => {
   } else {
     notes.push("normal-speed");
   }
-  
+
   return notes;
 };
 
 // Helper function to check if metrics are outside thresholds
 const isOutsideThresholds = (metrics, thresholds) => {
-  return metrics.volume > thresholds.volume_max ||
-         metrics.volume < thresholds.volume_min ||
-         metrics.pitch > thresholds.pitch_max ||
-         metrics.pitch < thresholds.pitch_min ||
-         metrics.speed > thresholds.speed_max ||
-         metrics.speed < thresholds.speed_min;
+  return (
+    metrics.volume > thresholds.volume_max ||
+    metrics.volume < thresholds.volume_min ||
+    metrics.pitch > thresholds.pitch_max ||
+    metrics.pitch < thresholds.pitch_min ||
+    metrics.speed > thresholds.speed_max ||
+    metrics.speed < thresholds.speed_min
+  );
 };
 
 // Endpoint to upload an audio file
@@ -101,7 +103,8 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("userThresholds: ", userThresholds);
 
     // Send the file to the Python microservice
-    const microserviceUrl = process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
+    const microserviceUrl =
+      process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
@@ -111,7 +114,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       },
     });
 
-    console.log('response: ', response.data)
+    console.log("response: ", response.data);
 
     // Prepare metrics
     const metrics = {

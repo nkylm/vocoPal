@@ -32,7 +32,7 @@ const SpeechDataSchema = new mongoose.Schema({
         "normal-pitch",
         "loud",
         "quiet",
-        "normal-volume"
+        "normal-volume",
       ],
     },
   ],
