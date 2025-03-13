@@ -54,6 +54,8 @@ const ShareModal = ({ open, onClose, onSuccess }) => {
 
       if (error.response && error.response.status === 404) {
         message.error(`No user found with email ${email}`);
+      } else if (error.response && error.response.status === 400) {
+        message.error('Metrics already shared with this user');
       } else {
         message.error('Failed to share metrics. Please try again.');
       }
