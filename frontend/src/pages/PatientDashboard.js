@@ -30,6 +30,7 @@ const PatientDashboard = () => {
   });
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
+  const [granularity, setGranularity] = useState('week');
 
   // Calculate analytics from speech data
   useEffect(() => {
@@ -176,65 +177,83 @@ const PatientDashboard = () => {
     fetchThresholds();
   }, [userId]);
 
-  // Fetch speech data when date changes
-  const handleDateChange = async (date, dateString) => {
-    if (!dateString) return;
+  // Add useEffect to handle granularity changes
+  useEffect(() => {
+    if (selectedDate) {
+      // Reuse the date that was already selected but with new granularity
+      handleDateChange(selectedDate, null, null);
+    }
+  }, [granularity]); // Add granularity to dependency array
 
-    const formattedStartDate = dayjs(dateString, 'MMMM Do, YYYY').format('YYYY-MM-DD');
-    const formattedEndDate = dayjs(dateString, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+  // Modify handleDateChange to calculate date ranges based on granularity
+  const handleDateChange = async (date, dateString, endDate) => {
+    if (!date) return;
 
-    // Get last week's date range
-    const lastWeekStartDate = dayjs(dateString, 'MMMM Do, YYYY')
-      .subtract(7, 'day')
-      .format('YYYY-MM-DD');
-    const lastWeekEndDate = dayjs(dateString, 'MMMM Do, YYYY').format('YYYY-MM-DD');
+    const startDate = dayjs(date).startOf('day');
+    let formattedStartDate;
+    let formattedEndDate;
 
-    let currentWeekData = [];
-    let lastWeekData = [];
+    // Calculate start and end dates based on granularity
+    switch (granularity) {
+      case 'day':
+        formattedStartDate = startDate.format('YYYY-MM-DD');
+        formattedEndDate = startDate.clone().add(1, 'day').format('YYYY-MM-DD');
+        break;
+      case 'week':
+        formattedStartDate = startDate.format('YYYY-MM-DD');
+        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+        break;
+      case 'month':
+        formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
+        formattedEndDate = startDate.endOf('month').format('YYYY-MM-DD');
+        break;
+      case 'year':
+        formattedStartDate = startDate.startOf('year').format('YYYY-MM-DD');
+        formattedEndDate = startDate.endOf('year').format('YYYY-MM-DD');
+        break;
+      default:
+        formattedStartDate = startDate.format('YYYY-MM-DD');
+        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+    }
+
+    // Always update the selected date first
+    setSelectedDate(startDate);
 
     try {
-      // Fetch current week's data
       const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { startDate: formattedStartDate, endDate: formattedEndDate }
+        params: { 
+          startDate: formattedStartDate,
+          endDate: formattedEndDate
+        }
       });
-      currentWeekData = response.data;
+      setSpeechData(response.data);
     } catch (error) {
-      if (error.response?.status !== 404) {
-        console.error('Error fetching current week data:', error.message);
-      }
-      currentWeekData = [];
+      console.error('Error fetching speech data:', error);
+      setSpeechData([]); // Set empty data on error
     }
 
+    // Fetch last week's data for comparison
     try {
-      // Fetch last week's data
+      const lastWeekStartDate = startDate.clone().subtract(7, 'days').format('YYYY-MM-DD');
+      const lastWeekEndDate = startDate.format('YYYY-MM-DD');
+      
       const lastWeekResponse = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { startDate: lastWeekStartDate, endDate: lastWeekEndDate }
+        params: { 
+          startDate: lastWeekStartDate,
+          endDate: lastWeekEndDate
+        }
       });
-      lastWeekData = lastWeekResponse.data;
+      setLastWeekSpeechData(lastWeekResponse.data);
     } catch (error) {
-      if (error.response?.status !== 404) {
-        console.error('Error fetching last week data:', error.message);
-      }
-      lastWeekData = [];
+      console.error('Error fetching last week data:', error);
+      setLastWeekSpeechData([]); // Set empty data on error
     }
-
-    console.log('currentWeekData: ', currentWeekData);
-    console.log('lastWeekData: ', lastWeekData);
-
-    // Update states regardless of API call success
-    setSpeechData(currentWeekData);
-    setLastWeekSpeechData(lastWeekData);
-    setSelectedDate(dateString);
   };
 
   const renderMetricCard = (title, icon, data, range) => {
-    console.log(`Rendering metric card for ${title}:`, data); // Add this line
-
     const getTitleBoxColor = (title) => {
-      console.log('title: ', title);
-      console.log('data: ', data);
       switch (title) {
         case 'Volume':
           return '#e6f4ff';
@@ -356,7 +375,12 @@ const PatientDashboard = () => {
         <TopNavBar />
         <div className="content p-6">
           <div className="mb-6">
-            <DatePickerDropdown onDateChange={handleDateChange} value={selectedDate} />
+            <DatePickerDropdown 
+              onDateChange={handleDateChange}
+              value={selectedDate}
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+            />
           </div>
           <Tabs
             defaultActiveKey="graph"
@@ -367,7 +391,7 @@ const PatientDashboard = () => {
                 children: (
                   <Card>
                     {thresholds ? (
-                      <Graph speechData={speechData} selectedDate={selectedDate} />
+                      <Graph speechData={speechData} selectedDate={selectedDate} granularity={granularity} />
                     ) : (
                       <p>Loading thresholds...</p>
                     )}
@@ -416,16 +440,8 @@ const PatientDashboard = () => {
                   <RecordingsList
                     userId={userId}
                     selectedDate={selectedDate}
-                    startDate={
-                      selectedDate
-                        ? dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD')
-                        : null
-                    }
-                    endDate={
-                      selectedDate
-                        ? dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD')
-                        : null
-                    }
+                    startDate={selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null}
+                    endDate={selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null}
                   />
                 )
               }

@@ -13,31 +13,100 @@ import {
 import { Line } from 'react-chartjs-2';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { Radio } from 'antd';
 
-// Extend dayjs with the customParseFormat plugin
+// Extend dayjs with required plugins
 dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const GraphComponent = ({ speechData, selectedDate }) => {
+const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   const [displayMode, setDisplayMode] = useState('inRange'); // 'inRange', 'aboveRange', 'belowRange'
+  
+  // Get browser's timezone
+  const browserTimezone = dayjs.tz.guess();
 
   if (!selectedDate || speechData.length === 0) {
     return <p>Please select a date to view the graph.</p>;
   }
 
-  const parsedDate = dayjs(selectedDate, 'MMMM Do, YYYY');
-  const dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('YYYY-MM-DD'));
+  const getDateLabels = () => {
+    // Convert selectedDate to browser timezone
+    const parsedDate = dayjs(selectedDate).tz(browserTimezone);
+    let dates = [];
+    
+    switch (granularity) {
+      case 'day':
+        dates = Array.from({ length: 24 }, (_, i) => 
+          i.toString().padStart(2, '0')
+        );
+        break;
+      case 'week':
+        dates = Array.from({ length: 7 }, (_, i) => 
+          parsedDate.add(i, 'day').format('ddd D')
+        );
+        break;
+      case 'month':
+        dates = Array.from({ length: parsedDate.daysInMonth() }, (_, i) => 
+          (i + 1).toString()
+        );
+        break;
+      case 'year':
+        dates = Array.from({ length: 12 }, (_, i) => 
+          parsedDate.month(i).format('MMM')
+        );
+        break;
+      default:
+        dates = Array.from({ length: 7 }, (_, i) => 
+          parsedDate.add(i, 'day').format('D')
+        );
+    }
+    return dates;
+  };
 
   // Helper function to calculate percentages for each range type
-  const calculatePercentages = (date, rangeType) => {
-    const dataForDate = speechData.filter((entry) =>
-      dayjs(entry.date_recorded).isSame(date, 'day')
-    );
+  const calculatePercentages = (dateLabel, rangeType) => {
+    const getDataForPeriod = () => {
+      switch (granularity) {
+        case 'day':
+          return speechData.filter(entry => {
+            // Convert entry date to browser timezone and compare hours
+            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
+            return entryDate.format('HH') === dateLabel;
+          });
+        case 'week':
+          return speechData.filter(entry => {
+            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
+            return entryDate.format('ddd D') === dateLabel;
+          });
+        case 'month':
+          return speechData.filter(entry => {
+            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
+            return entryDate.format('D') === dateLabel;
+          });
+        case 'year':
+          return speechData.filter(entry => {
+            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
+            return entryDate.format('MMM') === dateLabel;
+          });
+        default:
+          return speechData.filter(entry => {
+            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
+            return entryDate.format('D') === dateLabel;
+          });
+      }
+    };
 
-    if (dataForDate.length === 0) return { volume: 0, pitch: 0, speed: 0 };
+    const dataForPeriod = getDataForPeriod();
+
+    console.log('dataForPeriod: ', dataForPeriod);
+
+    if (dataForPeriod.length === 0) return { volume: 0, pitch: 0, speed: 0 };
 
     const getMetricStatus = (notes, metric) => {
       const normalNote = `normal-${metric}`;
@@ -65,21 +134,21 @@ const GraphComponent = ({ speechData, selectedDate }) => {
     };
 
     Object.keys(metrics).forEach((metric) => {
-      const matchingEntries = dataForDate.filter((entry) =>
+      const matchingEntries = dataForPeriod.filter((entry) =>
         getMetricStatus(entry.audio_notes, metric)
       ).length;
-      metrics[metric] = (matchingEntries / dataForDate.length) * 100;
+      metrics[metric] = (matchingEntries / dataForPeriod.length) * 100;
     });
 
     return metrics;
   };
 
-  // Calculate percentages for all dates
-  const percentages = dates.map((date) => calculatePercentages(date, displayMode));
+  const labels = getDateLabels();
+  const percentages = labels.map(label => calculatePercentages(label, displayMode));
 
   // Prepare chart data
   const chartData = {
-    labels: dates.map((date) => dayjs(date).format('D')),
+    labels: labels,
     datasets: [
       {
         label: 'Volume',
@@ -170,7 +239,8 @@ GraphComponent.propTypes = {
       audio_notes: PropTypes.arrayOf(PropTypes.string).isRequired
     })
   ).isRequired,
-  selectedDate: PropTypes.string
+  selectedDate: PropTypes.string,
+  granularity: PropTypes.oneOf(['day', 'week', 'month', 'year']).isRequired
 };
 
 export default GraphComponent;

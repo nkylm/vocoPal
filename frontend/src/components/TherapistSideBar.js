@@ -6,7 +6,7 @@ const { Sider } = Layout;
 const { Title } = Typography;
 
 const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatientSelect, onRespondToRequest }) => {
-  const acceptedPatients = patients.filter(p => p.status === 'accepted');
+  const acceptedPatients = patients?.filter(p => p.status === 'accepted');
   
   return (
     <Sider
@@ -31,11 +31,11 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
             <Title level={5} style={{ margin: 0, color: '#666' }}>
               REQUESTS
             </Title>
-            {pendingRequests.length > 0 && (
-              <Badge count={pendingRequests.length} style={{ marginLeft: '8px' }} />
+            {pendingRequests?.length > 0 && (
+              <Badge count={pendingRequests?.length} style={{ marginLeft: '8px' }} />
             )}
           </div>
-          {pendingRequests.map(request => (
+          {pendingRequests?.map(request => (
             <div
               key={request.userId._id}
               style={{
@@ -80,12 +80,12 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
           <Title level={5} style={{ margin: '0 0 16px', color: '#666' }}>
             PATIENTS
           </Title>
-          {acceptedPatients.length === 0 ? (
+          {acceptedPatients?.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#666' }}>
               No patients yet
             </div>
           ) : (
-            acceptedPatients.map(patient => (
+            acceptedPatients?.map(patient => (
               <div
                 key={patient.userId._id}
                 onClick={() => onPatientSelect(patient.userId._id)}
