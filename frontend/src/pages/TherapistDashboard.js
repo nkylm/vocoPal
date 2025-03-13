@@ -32,34 +32,37 @@ const TherapistDashboard = () => {
     pitch: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
     speed: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 }
   });
+  const [pendingRequests, setPendingRequests] = useState([]);
 
   const token = localStorage.getItem('token');
 
+  const fetchPatients = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/access/has-access-to', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const allAccess = response.data.hasAccessTo || [];
+      
+      // Separate pending requests and accepted patients
+      const pending = allAccess.filter(p => p.status === 'pending');
+      const accepted = allAccess.filter(p => p.status === 'accepted');
+
+      setPendingRequests(pending);
+      setPatients(accepted);
+
+      if (accepted.length > 0) {
+        const firstPatient = accepted[0];
+        setSelectedPatient(firstPatient.userId._id);
+        setHasRecordingsAccess(firstPatient.recordings || false);
+      }
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    }
+  };
+  
   // Fetch list of patients the therapist has access to
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/access/has-access-to', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const patientsWithAccess = response.data.hasAccessTo.filter(
-          (p) => p.analytics || p.recordings
-        );
-
-        setPatients(patientsWithAccess);
-
-        console.log('patientsWithAccess', patientsWithAccess);
-        if (patientsWithAccess.length > 0) {
-          const firstPatient = patientsWithAccess[0];
-          setSelectedPatient(firstPatient.userId._id);
-          setHasRecordingsAccess(firstPatient.recordings || false);
-        }
-      } catch (error) {
-        console.error('Error fetching patients:', error);
-      }
-    };
-
     fetchPatients();
   }, [token]);
 
@@ -272,6 +275,21 @@ const TherapistDashboard = () => {
     }
   };
 
+  const handleRespondToRequest = async (patientId, response) => {
+    try {
+      await axios.post(
+        'http://localhost:8000/api/access/respond-to-request',
+        { patientId, response },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Refresh the patients list
+      fetchPatients();
+    } catch (error) {
+      console.error('Error responding to request:', error);
+    }
+  };
+
   const renderMetricCard = (title, icon, data, range) => {
     const getTitleBoxColor = (title) => {
       switch (title) {
@@ -472,8 +490,10 @@ const TherapistDashboard = () => {
     <div className="dashboard-layout">
       <TherapistSideBar
         patients={patients}
+        pendingRequests={pendingRequests}
         selectedPatient={selectedPatient}
         onPatientSelect={handlePatientChange}
+        onRespondToRequest={handleRespondToRequest}
       />
       <div className="right-content">
         <TherapistTopNavBar />

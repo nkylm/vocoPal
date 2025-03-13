@@ -19,18 +19,21 @@ const PermissionsTable = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Transform the data to match our table structure
-      const transformedData = response.data.sharedWith.map((item, index) => ({
-        key: item.userId._id,
-        name: item.userId.name,
-        initials: item.userId.initials,
-        color: item.userId.avatarColor,
-        analytics: item.analytics,
-        recordings: item.recordings,
-        accessLevel: item.accessLevel,
-        relation: item.userId.relation,
-        email: item.userId.email
-      }));
+      // Transform the data and filter out pending requests
+      const transformedData = response.data.sharedWith
+        .filter(item => item.status === 'accepted') // Only show accepted permissions
+        .map((item, index) => ({
+          key: item.userId._id,
+          name: item.userId.name,
+          initials: item.userId.initials,
+          color: item.userId.avatarColor,
+          analytics: item.analytics,
+          recordings: item.recordings,
+          accessLevel: item.accessLevel,
+          relation: item.userId.relation,
+          email: item.userId.email,
+          status: item.status
+        }));
 
       setPermissions(transformedData);
     } catch (error) {
@@ -179,13 +182,19 @@ const PermissionsTable = () => {
 
   return (
     <div className="permissions-container">
-      <Table
-        dataSource={permissions}
-        columns={columns}
-        pagination={false}
-        loading={loading}
-        className="permissions-table"
-      />
+      {permissions.length === 0 && !loading ? (
+        <div style={{ textAlign: 'left' }}>
+          <p>No active permissions. Waiting for therapists to accept your share requests.</p>
+        </div>
+      ) : (
+        <Table
+          dataSource={permissions}
+          columns={columns}
+          pagination={false}
+          loading={loading}
+          className="permissions-table"
+        />
+      )}
     </div>
   );
 };

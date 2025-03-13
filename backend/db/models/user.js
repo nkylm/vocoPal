@@ -11,6 +11,11 @@ const PermissionSchema = new mongoose.Schema({
     enum: ["Can edit", "Can view", "No access"],
     default: "No access",
   },
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "declined"],
+    default: "pending"
+  }
 });
 
 // Updated UserSchema to include permissions and relations
