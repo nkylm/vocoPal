@@ -12,6 +12,7 @@ import TherapistTopNavBar from '../components/TherapistTopNavBar';
 import DatePickerDropdown from '../components/DatePickerDropdown';
 import Graph from '../components/Graph';
 import RecordingsList from '../components/RecordingsList';
+import FlagsList from '../components/FlagsList';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import './TherapistDashboard.css';
@@ -500,7 +501,14 @@ const TherapistDashboard = () => {
       : {
           key: 'flags',
           label: 'Flags',
-          children: <Card>Flagged recordings will appear here</Card>
+          children: selectedPatient && (
+            <FlagsList
+              userId={selectedPatient}
+              selectedDate={selectedDate}
+              startDate={selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null}
+              endDate={selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null}
+            />
+          )
         };
 
     return [...baseItems, thirdTab];
