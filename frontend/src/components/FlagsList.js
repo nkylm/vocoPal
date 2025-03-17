@@ -30,26 +30,31 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
   useEffect(() => {
     const fetchFlags = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
-
-        if (startDate && endDate) {
-          url += `?startDate=${startDate}&endDate=${endDate}`;
-          const response = await axios.get(url, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setFlags(response.data);
-        } else {
+        setLoading(true);
+        try {
+          const token = localStorage.getItem('token');
+          let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
+  
+          // Only fetch flags if a date is selected
+          if (selectedDate) {
+            const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
+            const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+            url += `?startDate=${startDate}&endDate=${endDate}`;
+  
+            const response = await axios.get(url, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setFlags(response.data);
+          } else {
+            // If no date is selected, show no flags
+            setFlags([]);
+          }
+        } catch (error) {
+          console.error('Error fetching recordings:', error);
           setFlags([]);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching flags:', error);
-        setFlags([]);
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchFlags();
