@@ -11,10 +11,10 @@ import {
 
 const { Title, Text } = Typography;
 
-const RecordingsList = ({ userId, selectedDate }) => {
-  const [recordings, setRecordings] = useState([]);
+const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
+  const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filteredRecordings, setFilteredRecordings] = useState([]);
+  const [filteredFlags, setFilteredFlags] = useState([]);
   const [filters, setFilters] = useState({
     // Speech Metric
     volumeLevel: true,
@@ -29,44 +29,37 @@ const RecordingsList = ({ userId, selectedDate }) => {
   });
 
   useEffect(() => {
-    const fetchRecordings = async () => {
+    const fetchFlags = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
         let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
 
-        // Only fetch recordings if a date is selected
-        if (selectedDate) {
-          const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
-          const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+        if (startDate && endDate) {
           url += `?startDate=${startDate}&endDate=${endDate}`;
-
           const response = await axios.get(url, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setRecordings(response.data);
+          setFlags(response.data);
         } else {
-          // If no date is selected, show no recordings
-          setRecordings([]);
+          setFlags([]);
         }
       } catch (error) {
-        console.error('Error fetching recordings:', error);
-        setRecordings([]);
+        console.error('Error fetching flags:', error);
+        setFlags([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecordings();
-  }, [userId, selectedDate]);
+    fetchFlags();
+  }, [userId, startDate, endDate]);
 
   useEffect(() => {
-    // Filter recordings based on selected filters
-    const filterRecordings = () => {
-      return recordings.filter((recording) => {
-        const notes = recording.audio_notes;
+    const filterFlags = () => {
+      return flags.filter((flag) => {
+        const notes = flag.audio_notes;
 
-        // Check if any of the enabled filters match the recording's notes
         const matchesSpeechMetric =
           (filters.volumeLevel &&
             (notes.includes('loud') ||
@@ -93,8 +86,8 @@ const RecordingsList = ({ userId, selectedDate }) => {
       });
     };
 
-    setFilteredRecordings(filterRecordings());
-  }, [recordings, filters]);
+    setFilteredFlags(filterFlags());
+  }, [flags, filters]);
 
   const handleFilterChange = (filterName) => {
     setFilters((prev) => ({
@@ -170,10 +163,10 @@ const RecordingsList = ({ userId, selectedDate }) => {
     </Card>
   );
 
-  const renderRecordingCard = (recording) => {
+  const renderFlagCard = (flag) => {
     const getMetricBadges = () => {
       const badges = [];
-      const notes = recording.audio_notes;
+      const notes = flag.audio_notes;
 
       // Volume badge
       if (notes.includes('loud')) {
@@ -269,7 +262,7 @@ const RecordingsList = ({ userId, selectedDate }) => {
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: '1px solid #f0f0f0',
-          height: '160px',  // Fixed height to accommodate audio player
+          height: '120px',  // Fixed height instead of aspect ratio
         }}
         bodyStyle={{
           padding: '16px',
@@ -279,7 +272,7 @@ const RecordingsList = ({ userId, selectedDate }) => {
           justifyContent: 'space-between'
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {badges.map((badge, index) => (
             <div key={index} style={{
               display: 'flex',
@@ -314,32 +307,28 @@ const RecordingsList = ({ userId, selectedDate }) => {
             </div>
           ))}
         </div>
-        <div>
-          <p>{dayjs(recording.date_recorded).format('MMM D, h:mm A')}</p>
-          <audio controls style={{ width: '100%' }}>
-            <source src={recording.recording_url} type="audio/wav" />
-            Your browser does not support the audio element.
-          </audio>
-        </div>
+        <Text type="secondary">
+          {dayjs(flag.date_recorded).format('MMM D, h:mm A')}
+        </Text>
       </Card>
     );
   };
 
   if (loading) {
-    return <Spin tip="Loading recordings..." />;
+    return <Spin tip="Loading flags..." />;
   }
 
   return (
     <div>
       <FilterSection />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <Title level={4}>Flagged recordings</Title>
+        <Title level={4}>Flags</Title>
         {selectedDate ? (
           <span>
-            Showing {filteredRecordings.length} of {recordings.length}
+            Showing {filteredFlags.length} of {flags.length}
           </span>
         ) : (
-          <span>Please select a date to view recordings</span>
+          <span>Please select a date to view flags</span>
         )}
       </div>
       {selectedDate ? (
@@ -353,20 +342,22 @@ const RecordingsList = ({ userId, selectedDate }) => {
             xl: 4,
             xxl: 4,
           }}
-          dataSource={filteredRecordings}
-          renderItem={renderRecordingCard}
-          locale={{ emptyText: 'No recordings found for the selected period' }}
+          dataSource={filteredFlags}
+          renderItem={renderFlagCard}
+          locale={{ emptyText: 'No flags found for the selected period' }}
         />
       ) : (
-        <Empty description="Select a date to view recordings" />
+        <Empty description="Select a date to view flags" />
       )}
     </div>
   );
 };
 
-RecordingsList.propTypes = {
+FlagsList.propTypes = {
   userId: PropTypes.string.isRequired,
-  selectedDate: PropTypes.string
+  selectedDate: PropTypes.string,
+  startDate: PropTypes.string,
+  endDate: PropTypes.string
 };
 
-export default RecordingsList;
+export default FlagsList;
