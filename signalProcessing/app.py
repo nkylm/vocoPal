@@ -106,7 +106,7 @@ def calculate_pitch_fluctuation(f0_min, f0_max):
     """
     return float(f0_max) - float(f0_min)
     "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75"
-]
+
 
 def calculate_relative_volume(y, sr, frame_length=2048):
     """
@@ -190,21 +190,20 @@ def analyze_audio_file():
     z5=z4.T
     z5_single = z5[:, 0]
     
-    # Calculate speech rate fluctuation
-    fluctuation, chunk_rates = calculate_speech_rate_fluctuation(output_path)
-    
     # Create dictionary with original features
-    json_dict = dict(zip(features[:-2], z5_single))  # Exclude the last two features (speech_rate_fluctuation and pitch_fluctuation)
+    json_dict = dict(zip(features, z5_single))  # Exclude the last two features (speech_rate_fluctuation and pitch_fluctuation)
     
-    # Add speech rate fluctuation
-    json_dict["speech_rate_fluctuation"] = float(fluctuation)
-    
-    # Calculate and add pitch fluctuation
+    # Calculate and add pitch fluctuation first (faster calculation)
     pitch_fluctuation = calculate_pitch_fluctuation(json_dict["f0_min"], json_dict["f0_max"])
     json_dict["pitch_fluctuation"] = pitch_fluctuation
     
-    # Add chunk rates for detailed analysis if needed
-    # json_dict["chunk_speech_rates"] = chunk_rates
+    # Calculate speech rate fluctuation last (slower calculation)
+    fluctuation, chunk_rates = calculate_speech_rate_fluctuation(output_path)
+    json_dict["speech_rate_fluctuation"] = float(fluctuation)
+    
+    # Calculate and add relative volume
+    relative_volume = calculate_relative_volume(y, sr)
+    json_dict["relative_volume"] = float(relative_volume)
     
     return json_dict
 
