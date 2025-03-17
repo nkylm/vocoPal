@@ -183,15 +183,29 @@ def analyze_audio_file():
     
     # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
-    z1=str(objects[1]) # This will print the info from the textgrid object, and objects[1] is a parselmouth.Data object with a TextGrid inside
+    z1=str(objects[1])
     z2=z1.strip().split()
     z3=np.array(z2)
     z4=np.array(z3)[np.newaxis]
     z5=z4.T
     z5_single = z5[:, 0]
-
-    # Create dictionary
-    json_dict = dict(zip(features, z5_single))
+    
+    # Calculate speech rate fluctuation
+    fluctuation, chunk_rates = calculate_speech_rate_fluctuation(output_path)
+    
+    # Create dictionary with original features
+    json_dict = dict(zip(features[:-2], z5_single))  # Exclude the last two features (speech_rate_fluctuation and pitch_fluctuation)
+    
+    # Add speech rate fluctuation
+    json_dict["speech_rate_fluctuation"] = float(fluctuation)
+    
+    # Calculate and add pitch fluctuation
+    pitch_fluctuation = calculate_pitch_fluctuation(json_dict["f0_min"], json_dict["f0_max"])
+    json_dict["pitch_fluctuation"] = pitch_fluctuation
+    
+    # Add chunk rates for detailed analysis if needed
+    # json_dict["chunk_speech_rates"] = chunk_rates
+    
     return json_dict
 
 @app.route('/process', methods=['POST'])
