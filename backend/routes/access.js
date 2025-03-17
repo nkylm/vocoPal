@@ -45,99 +45,97 @@ router.get("/has-access-to", authMiddleware, async (req, res) => {
 router.post("/share", authMiddleware, async (req, res) => {
   const { email, analytics, recordings, accessLevel, relation } = req.body;
 
-  console.log("/share: ", req.body);
-
   try {
-    // Find the current user (who is sharing)
     const currentUser = await User.findById(req.user);
-
-    console.log("currentUser: ", currentUser);
-
-    // Make sure current user is a patient
     if (currentUser.role !== "patient") {
-      return res
-        .status(403)
-        .json({ message: "Only patients can share their metrics" });
+      return res.status(403).json({ message: "Only patients can share their metrics" });
     }
 
-    // Find the user to share with
     const targetUser = await User.findOne({ email });
-
-    console.log("targetUser: ", targetUser);
-
     if (!targetUser) {
-      return res
-        .status(404)
-        .json({ message: "User not found with this email" });
+      return res.status(404).json({ message: "User not found with this email" });
     }
-
-    // Ensure arrays exist
-    if (!currentUser.sharedWith) currentUser.sharedWith = [];
-    if (!targetUser.hasAccessTo) targetUser.hasAccessTo = [];
 
     // Check if already shared
     const alreadyShared = currentUser.sharedWith.some(
-      (p) => p.userId && p.userId.toString() === targetUser._id.toString(),
+      (p) => p.userId && p.userId.toString() === targetUser._id.toString()
     );
 
     if (alreadyShared) {
-      // Update existing permission
-      currentUser.sharedWith = currentUser.sharedWith.map((p) => {
-        if (p.userId && p.userId.toString() === targetUser._id.toString()) {
-          return {
-            ...p,
-            analytics,
-            recordings,
-            accessLevel,
-          };
-        }
-        return p;
-      });
+      return res.status(400).json({ message: "Already shared with this user" });
+    }
 
-      // Update corresponding entry in targetUser
-      if (targetUser.hasAccessTo) {
-        targetUser.hasAccessTo = targetUser.hasAccessTo.map((p) => {
-          if (p.userId && p.userId.toString() === currentUser._id.toString()) {
-            return {
-              ...p,
-              analytics,
-              recordings,
-              accessLevel,
-            };
-          }
-          return p;
-        });
-      }
-    } else {
-      // Add new permission
-      currentUser.sharedWith.push({
-        userId: targetUser._id,
-        analytics,
-        recordings,
-        accessLevel,
-      });
+    // Add new pending permission
+    currentUser.sharedWith.push({
+      userId: targetUser._id,
+      analytics,
+      recordings,
+      accessLevel,
+      status: "pending"  // Set initial status as pending
+    });
 
-      // Update target user's hasAccessTo array
-      targetUser.hasAccessTo.push({
-        userId: currentUser._id,
-        analytics,
-        recordings,
-        accessLevel,
-      });
+    // Add to target user's hasAccessTo array
+    targetUser.hasAccessTo.push({
+      userId: currentUser._id,
+      analytics,
+      recordings,
+      accessLevel,
+      status: "pending"  // Set initial status as pending
+    });
 
-      // Set relation if provided
-      if (relation && !targetUser.relation) {
-        targetUser.relation = relation;
-      }
+    if (relation && !targetUser.relation) {
+      targetUser.relation = relation;
     }
 
     await targetUser.save();
     await currentUser.save();
 
     res.json({
-      message: "Permission updated successfully",
-      sharedWith: currentUser.sharedWith,
+      message: "Access request sent successfully",
+      sharedWith: currentUser.sharedWith
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Add new endpoint to handle accept/decline requests
+router.post("/respond-to-request", authMiddleware, async (req, res) => {
+  const { patientId, response } = req.body;
+
+  try {
+    const therapist = await User.findById(req.user);
+    const patient = await User.findById(patientId);
+
+    if (!therapist || !patient) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update therapist's hasAccessTo
+    const therapistAccessIndex = therapist.hasAccessTo.findIndex(
+      p => p.userId.toString() === patientId
+    );
+
+    if (therapistAccessIndex === -1) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    therapist.hasAccessTo[therapistAccessIndex].status = response;
+
+    // Update patient's sharedWith
+    const patientShareIndex = patient.sharedWith.findIndex(
+      p => p.userId.toString() === therapist._id.toString()
+    );
+
+    if (patientShareIndex !== -1) {
+      patient.sharedWith[patientShareIndex].status = response;
+    }
+
+    await therapist.save();
+    await patient.save();
+
+    res.json({ message: `Request ${response} successfully` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
