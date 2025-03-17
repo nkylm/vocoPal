@@ -28,3 +28,5 @@ def record_audio(filename, record_seconds=10, chunk=1024, format=pyaudio.paInt16
     stream.stop_stream()
     stream.close()
     p.terminate()
+
+record_audio("test.wav", 10)

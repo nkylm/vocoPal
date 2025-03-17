@@ -183,7 +183,7 @@ def analyze_audio_file():
     
     # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
-    z1=str(objects[1]) # This will print the info from the textgrid object, and objects[1] is a parselmouth.Data object with a TextGrid inside
+    z1=str(objects[1])
     z2=z1.strip().split()
     z3=np.array(z2)
     z4=np.array(z3)[np.newaxis]
