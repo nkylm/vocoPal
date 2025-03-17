@@ -27,7 +27,7 @@ features = [
     "number_of_syllables", "number_of_pauses", "rate_of_speech", "articulation_rate",
     "speaking_duration", "original_duration", "balance", "f0_mean", "f0_std",
     "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75",
-    "speech_rate_fluctuation", "pitch_fluctuation"
+    "speech_rate_fluctuation", "pitch_fluctuation", "relative_volume"
 ]
 
 def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
@@ -51,31 +51,37 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
     # Split audio into chunks
     chunk_rates = []
     
+    # Create all chunks first
+    chunks = []
+    chunk_paths = []
     for i in range(0, len(y), chunk_size):
         chunk = y[i:i + chunk_size]
-        
         # Skip chunks that are too short (less than 1 second)
         if len(chunk) < sr:
             continue
-            
-        # Save chunk temporarily
-        chunk_path = os.path.join(root_folder, "audio/temp_chunk.wav")
+        chunks.append(chunk)
+        chunk_path = os.path.join(root_folder, f"audio/temp_chunk_{i}.wav")
+        chunk_paths.append(chunk_path)
         sf.write(chunk_path, chunk, sr)
-        
-        try:
-            # Analyze chunk using Praat
-            objects = run_file(praat_script, -20, 2, 0.3, 0, chunk_path, root_folder, 80, 400, 0.01, capture_output=True)
-            chunk_data = str(objects[1]).strip().split()
-            
-            # Get speech rate (syllables per second) - index 2 in the Praat output
-            if len(chunk_data) >= 3:  # Ensure we have enough data
-                speech_rate = float(chunk_data[2])
-                chunk_rates.append(speech_rate)
-        except:
-            # Skip chunks that can't be analyzed
-            continue
-        finally:
-            # Clean up temporary file
+    
+    try:
+        # Analyze all chunks
+        for chunk_path in chunk_paths:
+            try:
+                # Analyze chunk using Praat
+                objects = run_file(praat_script, -20, 2, 0.3, 0, chunk_path, root_folder, 80, 400, 0.01, capture_output=True)
+                chunk_data = str(objects[1]).strip().split()
+                
+                # Get speech rate (syllables per second) - index 2 in the Praat output
+                if len(chunk_data) >= 3:  # Ensure we have enough data
+                    speech_rate = float(chunk_data[2])
+                    chunk_rates.append(speech_rate)
+            except:
+                # Skip chunks that can't be analyzed
+                continue
+    finally:
+        # Clean up all temporary files at once
+        for chunk_path in chunk_paths:
             if os.path.exists(chunk_path):
                 os.remove(chunk_path)
     
@@ -99,9 +105,83 @@ def calculate_pitch_fluctuation(f0_min, f0_max):
         float: Pitch fluctuation (f0_max - f0_min)
     """
     return float(f0_max) - float(f0_min)
+    "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75"
+]
+
+def calculate_relative_volume(y, sr, frame_length=2048):
+    """
+    Calculate the volume difference between speech and noise segments.
+    
+    Args:
+        y: Audio signal
+        sr: Sample rate
+        frame_length: Frame length for analysis
+    
+    Returns:
+        float: Volume difference between speech and noise in dB
+    """
+    # Create preprocessed version for analysis
+    y_processed = librosa.effects.preemphasis(y.copy())
+    
+    # Calculate features with 75% overlap
+    hop_length = frame_length // 4
+    rms = librosa.feature.rms(y=y_processed, frame_length=frame_length, hop_length=hop_length)[0]
+    spectral_centroid = librosa.feature.spectral_centroid(y=y_processed, sr=sr, hop_length=hop_length)[0]
+    zero_crossing = librosa.feature.zero_crossing_rate(y=y_processed, frame_length=frame_length, hop_length=hop_length)[0]
+    
+    # Adaptive threshold calculation
+    noise_sample = y_processed[:int(0.5*sr)]
+    noise_rms = librosa.feature.rms(y=noise_sample, frame_length=frame_length)[0]
+    threshold_db = librosa.amplitude_to_db(np.percentile(noise_rms, 50)) + 2
+    
+    # Convert features to compatible dimensions
+    rms_db = librosa.amplitude_to_db(rms)
+    times = librosa.times_like(rms, sr=sr, hop_length=hop_length)
+    
+    # Speech detection
+    speech_frames = (
+        (rms_db > threshold_db) &
+        ((spectral_centroid > 1100) |
+         (zero_crossing < 0.15))
+    )
+    
+    # Collect speech and noise samples
+    speech_samples = []
+    noise_samples = []
+    
+    for i in range(len(speech_frames)):
+        start_sample = int(times[i] * sr)
+        end_sample = int(min((times[i] + hop_length/sr) * sr, len(y)))
+        frame = y[start_sample:end_sample]
+        
+        if speech_frames[i]:
+            speech_samples.append(frame)
+        else:
+            noise_samples.append(frame)
+    
+    # Calculate RMS values
+    if speech_samples:
+        speech_concat = np.concatenate(speech_samples)
+        speech_rms = np.sqrt(np.mean(speech_concat**2))
+        speech_vol_db = 20 * np.log10(speech_rms)
+    else:
+        speech_vol_db = -np.inf
+        
+    if noise_samples:
+        noise_concat = np.concatenate(noise_samples)
+        noise_rms = np.sqrt(np.mean(noise_concat**2))
+        noise_vol_db = 20 * np.log10(noise_rms)
+    else:
+        noise_vol_db = -np.inf
+    
+    return speech_vol_db - noise_vol_db
 
 def analyze_audio_file():
-    # Run main Praat analysis
+    """Analyze audio file and return metrics including speech rate fluctuation"""
+    # Load audio for volume analysis
+    y, sr = librosa.load(output_path, sr=None)
+    
+    # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
     z1=str(objects[1])
     z2=z1.strip().split()
