@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Radio, Dropdown, Menu, Button } from 'antd';
+import { Radio, Dropdown } from 'antd';
 
 // Extend dayjs with required plugins
 dayjs.extend(customParseFormat);
@@ -68,6 +68,55 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
         );
     }
     return dates;
+  };
+
+  // Helper function to get target threshold ranges for metrics
+  const getTargetThresholds = (metric) => {
+    // Initialize with default values
+    const defaultThresholds = {
+      volume: { min: 40, max: 70, unit: 'dB' },
+      pitch: { min: 100, max: 200, unit: 'Hz' },
+      speed: { min: 3.5, max: 6.5, unit: 'syll/sec' },
+      volume_fluctuation: { max: 15, unit: 'dB/s' },
+      pitch_fluctuation: { min: 20, max: 150, unit: 'Hz/s' },
+      speed_fluctuation: { max: 2, unit: 'syll/sec²' }
+    };
+
+    // If we have threshold data in the first entry, use it
+    if (speechData.length > 0 && speechData[0].thresholds) {
+      const thresholds = speechData[0].thresholds;
+      return {
+        volume: { 
+          min: thresholds.volume_min, 
+          max: thresholds.volume_max, 
+          unit: 'dB' 
+        },
+        pitch: { 
+          min: thresholds.pitch_min, 
+          max: thresholds.pitch_max, 
+          unit: 'Hz' 
+        },
+        speed: { 
+          min: thresholds.speed_min, 
+          max: thresholds.speed_max, 
+          unit: 'syll/sec' 
+        },
+        volume_fluctuation: { 
+          max: thresholds.volume_fluctuation_max, 
+          unit: 'dB/s' 
+        },
+        pitch_fluctuation: { 
+          min: thresholds.pitch_fluctuation_min, 
+          max: thresholds.pitch_fluctuation_max, 
+          unit: 'Hz/s' 
+        },
+        speed_fluctuation: { 
+          max: thresholds.speed_fluctuation_max, 
+          unit: 'syll/sec²' 
+        }
+      };
+    }
+    return defaultThresholds;
   };
 
   // Helper function to calculate percentages for each range type
@@ -184,6 +233,29 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
 
   const labels = getDateLabels();
   const percentages = labels.map(label => calculatePercentages(label, displayMode));
+  const thresholds = getTargetThresholds();
+
+  // Generate tooltip titles based on metric type
+  const generateTooltipLabel = (metric) => {
+    if (metricType === 'level') {
+      // Format for level metrics
+      const ranges = {
+        volume: `${thresholds.volume.min}-${thresholds.volume.max} ${thresholds.volume.unit}`,
+        pitch: `${thresholds.pitch.min}-${thresholds.pitch.max} ${thresholds.pitch.unit}`,
+        speed: `${thresholds.speed.min}-${thresholds.speed.max} ${thresholds.speed.unit}`
+      };
+      return ranges[metric];
+    } else {
+      // Format for fluctuation metrics
+      const fluctName = `${metric}_fluctuation`;
+      if (fluctName === 'pitch_fluctuation') {
+        return `${thresholds.pitch_fluctuation.min}-${thresholds.pitch_fluctuation.max} ${thresholds.pitch_fluctuation.unit}`;
+      } else {
+        const fluctMetric = metric === 'volume' ? 'volume_fluctuation' : 'speed_fluctuation';
+        return `Max: ${thresholds[fluctMetric].max} ${thresholds[fluctMetric].unit}`;
+      }
+    }
+  };
 
   // Prepare chart data
   const chartData = {
@@ -316,6 +388,26 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
           plugins: {
             legend: {
               position: 'top'
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  
+                  if (label) {
+                    const baseMetric = label.split(' ')[0].toLowerCase();
+                    label += `: ${context.parsed.y.toFixed(1)}%`;
+                    
+                    // Add target threshold information
+                    label += `\nTarget: ${generateTooltipLabel(baseMetric)}`;
+                  }
+                  
+                  return label;
+                }
+              }
             },
             title: {
               display: true,
