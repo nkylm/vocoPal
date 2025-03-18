@@ -92,9 +92,6 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
     chunk_rates = []
     chunk_volumes = []
     
-    print(f"\nAnalyzing {len(chunk_paths)} chunks:")
-    print("-" * 50)
-    
     try:
         # Analyze all chunks
         for i, chunk_path in enumerate(chunk_paths):
@@ -111,12 +108,6 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
                 # Calculate volume difference for this chunk
                 volume_diff, noise_db = calculate_chunk_volume(chunk_path)  # Get both values
                 chunk_volumes.append(volume_diff)
-                
-                print(f"Chunk {i+1}:")
-                print(f"  Volume difference: {volume_diff:.2f} dB")
-                print(f"  Noise level: {noise_db:.2f} dB")
-                print(f"  Speech rate: {speech_rate:.2f} syllables/sec")
-                print("-" * 50)
                 
             except Exception as e:
                 print(f"Error processing chunk {chunk_path}: {str(e)}")
@@ -135,14 +126,14 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
         
     volume_fluctuation = np.std(chunk_volumes) if chunk_volumes else 0.0
     
-    print("\nSummary:")
-    print(f"Number of chunks analyzed: {len(chunk_volumes)}")
-    print(f"Volume fluctuation (std dev): {volume_fluctuation:.2f} dB")
-    print(f"Speech rate fluctuation (max-min): {speech_rate_fluctuation:.2f} syllables/sec")
-    print(f"Max speech rate: {max(chunk_rates):.2f} syllables/sec")
-    print(f"Min speech rate: {min(chunk_rates):.2f} syllables/sec")
-    print(f"Average volume difference: {np.mean(chunk_volumes):.2f} dB")
-    print(f"Average speech rate: {np.mean(chunk_rates):.2f} syllables/sec")
+    # print("\nSummary:")
+    # print(f"Number of chunks analyzed: {len(chunk_volumes)}")
+    # print(f"Volume fluctuation (std dev): {volume_fluctuation:.2f} dB")
+    # print(f"Speech rate fluctuation (max-min): {speech_rate_fluctuation:.2f} syllables/sec")
+    # print(f"Max speech rate: {max(chunk_rates):.2f if chunk_rates else 0} syllables/sec")
+    # print(f"Min speech rate: {min(chunk_rates):.2f if chunk_rates else 0} syllables/sec")
+    # print(f"Average volume difference: {np.mean(chunk_volumes):.2f if chunk_volumes else 0} dB")
+    # print(f"Average speech rate: {np.mean(chunk_rates):.2f if chunk_rates else 0} syllables/sec")
         
     return speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes
 
@@ -157,8 +148,18 @@ def calculate_pitch_fluctuation(f0_min, f0_max):
     Returns:
         float: Pitch fluctuation (f0_max - f0_min)
     """
-    return float(f0_max) - float(f0_min)
-    "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75"
+    try:
+        # Convert to float and handle potential string values
+        f0_min = float(f0_min) if f0_min is not None else 0.0
+        f0_max = float(f0_max) if f0_max is not None else 0.0
+        
+        # Return 0 if either value is 0 or invalid
+        if f0_min <= 0 or f0_max <= 0:
+            return 0.0
+            
+        return f0_max - f0_min
+    except (ValueError, TypeError):
+        return 0.0
 
 def classify_ambient_noise(noise_db):
     """
@@ -253,6 +254,10 @@ def analyze_audio_file():
     # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
     z1=str(objects[1])
+
+    if z1 == "A noisy background or unnatural-sounding speech detected. No result try again\n":
+        return {"error": "Noisy background or unnatural-sounding speech detected, analysis failed"}
+    
     z2=z1.strip().split()
     z3=np.array(z2)
     z4=np.array(z3)[np.newaxis]
@@ -261,10 +266,6 @@ def analyze_audio_file():
     
     # Create dictionary with original features
     json_dict = dict(zip(features, z5_single))  # Exclude the last three features
-    
-    # Calculate and add pitch fluctuation first (faster calculation)
-    pitch_fluctuation = calculate_pitch_fluctuation(json_dict["f0_min"], json_dict["f0_max"])
-    json_dict["pitch_fluctuation"] = pitch_fluctuation
     
     # Calculate speech rate and volume fluctuations last (slower calculation)
     speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes = calculate_speech_rate_fluctuation(output_path)
@@ -293,7 +294,10 @@ def process_audio():
 
             # Pass explicit path to analysis function
             analysis_result = analyze_audio_file()
-            print(analysis_result)           
+
+            # Check if the result contains an error
+            if "error" in analysis_result:
+                return jsonify(analysis_result), 400
 
         # os.remove(output_path)
 
