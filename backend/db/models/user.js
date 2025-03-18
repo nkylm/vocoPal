@@ -7,8 +7,8 @@ const PermissionSchema = new mongoose.Schema({
   recordings: { type: Boolean, default: false },
   accessLevel: {
     type: String,
-    enum: ["Can edit", "Can view", "No access"],
-    default: "No access",
+    enum: ["Can edit", "Can view"],
+    default: "Can view",
   },
   status: {
     type: String,
