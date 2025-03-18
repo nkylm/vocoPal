@@ -265,11 +265,15 @@ def analyze_audio_file():
     """Analyze audio file and return metrics including speech rate and volume fluctuations"""
     
     logger.info('analyze_audio_file')
-
-    # Load audio for volume analysis
-    y, sr = librosa.load(output_path, sr=None)
-
+    
     logger.info(f'output_path: {output_path}')
+
+    try:
+        # Load audio for volume analysis
+        y, sr = librosa.load(output_path, sr=None)
+    except Exception as e:
+        logger.info(f"Error loading audio file {output_path}: {e}")
+        y, sr = None, None  # Assign None to avoid undefined variables
 
     logger.info(f'y, sr: {y, sr}')
     
