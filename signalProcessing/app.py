@@ -269,14 +269,19 @@ def analyze_audio_file():
     logger.info(f'output_path: {output_path}')
 
     try:
-        # Load audio for volume analysis
-        y, sr = librosa.load(output_path, sr=None)
-    except Exception as e:
-        logger.info(f"Error loading audio file {output_path}: {e}")
-        y, sr = None, None  # Assign None to avoid undefined variables
+        if not os.path.exists(output_path):
+            logger.error(f"File not found: {output_path}")
+        else:
+            logger.info(f"File found: {output_path}, attempting to load...")
 
-    logger.info(f'y, sr: {y, sr}')
-    
+        y, sr = librosa.load(output_path, sr=None)
+        logger.info(f"Audio loaded successfully: {y.shape}, {sr}")
+
+    except Exception as e:
+        logger.error(f"Error loading audio file {output_path}: {e}")
+        y, sr = None, None  # Assign None to avoid undefined variables
+        logger.info(f'y, sr: {y, sr}')
+        
     # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
     z1=str(objects[1])
