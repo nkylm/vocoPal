@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Table, Select, Button, Typography, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Select, Button, Typography, message, Spin } from 'antd';
 import axios from 'axios';
 
 const { Title } = Typography;
@@ -55,7 +55,7 @@ const ThresholdTable = ({ patientId, readOnly }) => {
     Wide: 15
   };
 
-  // Define specific fluctuation ranges for pitch (these would be your actual values)
+  // Define specific fluctuation ranges for pitch
   const pitchFluctuationRanges = {
     Narrow: { min: 5, max: 15 },
     Moderate: { min: 10, max: 30 },
@@ -91,6 +91,37 @@ const ThresholdTable = ({ patientId, readOnly }) => {
   ]);
 
   const [loading, setLoading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
+
+  // Helper function to determine level type based on min and max values
+  const determineLevelType = (min, max, metricType) => {
+    const options = metricRanges[metricType].levelOptions;
+    for (const [type, range] of Object.entries(options)) {
+      const { min: typeMin, max: typeMax } = parseRange(range);
+      if (min === typeMin && max === typeMax) {
+        return type;
+      }
+    }
+    return 'Moderate'; // Default fallback
+  };
+
+  // Helper function to determine fluctuation type based on values
+  const determineFluctuationType = (value, metricType) => {
+    if (metricType === 'Volume') {
+      for (const [type, limit] of Object.entries(volumeFluctuationLimits)) {
+        if (value === limit) return type;
+      }
+    } else if (metricType === 'Pitch') {
+      for (const [type, range] of Object.entries(pitchFluctuationRanges)) {
+        if (value >= range.min && value <= range.max) return type;
+      }
+    } else if (metricType === 'Speed') {
+      for (const [type, limit] of Object.entries(speedFluctuationLimits)) {
+        if (value === limit) return type;
+      }
+    }
+    return 'Moderate'; // Default fallback
+  };
 
   // Helper function to parse range values
   const parseRange = (rangeStr) => {
@@ -107,28 +138,111 @@ const ThresholdTable = ({ patientId, readOnly }) => {
     return null;
   };
 
-  const handleSave = async () => {
+  // Fetch user thresholds from backend
+  useEffect(() => {
+    const fetchUserThresholds = async () => {
+      setFetchingData(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `http://localhost:8000/api/thresholds/${patientId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const thresholds = response.data;
 
+        console.log('thresholds: ', thresholds)
+        
+        // Determine level types based on min/max values
+        const volumeLevelType = determineLevelType(
+          thresholds[0].volume_min, 
+          thresholds[0].volume_max, 
+          'Volume'
+        );
+        
+        const pitchLevelType = determineLevelType(
+          thresholds[0].pitch_min, 
+          thresholds[0].pitch_max, 
+          'Pitch'
+        );
+        
+        const speedLevelType = determineLevelType(
+          thresholds[0].speed_min, 
+          thresholds[0].speed_max, 
+          'Speed'
+        );
+        
+        // Determine fluctuation types
+        const volumeFluctuationType = determineFluctuationType(
+          thresholds[0].volume_fluctuation_max, 
+          'Volume'
+        );
+        
+        // For pitch, we'll use the max value to determine type
+        const pitchFluctuationType = determineFluctuationType(
+          thresholds[0].pitch_fluctuation_max, 
+          'Pitch'
+        );
+        
+        const speedFluctuationType = determineFluctuationType(
+          thresholds[0].speed_fluctuation_max, 
+          'Speed'
+        );
+        
+        // Update the data state with fetched values
+        setData([
+          {
+            key: '1',
+            metric: 'Volume',
+            levelType: volumeLevelType,
+            fluctuationType: volumeFluctuationType
+          },
+          {
+            key: '2',
+            metric: 'Pitch',
+            levelType: pitchLevelType,
+            fluctuationType: pitchFluctuationType
+          },
+          {
+            key: '3',
+            metric: 'Speed',
+            levelType: speedLevelType,
+            fluctuationType: speedFluctuationType
+          }
+        ]);
+      } catch (error) {
+        console.error('Error fetching user thresholds:', error);
+        message.error('Failed to load user thresholds. Using default values.');
+        // Keep the default values
+      } finally {
+        setFetchingData(false);
+      }
+    };
+
+    fetchUserThresholds();
+  }, [patientId]);
+
+  const handleSave = async () => {
     setLoading(true);
     try {
       if (readOnly) {
         throw new Error('Read-only mode - changes not allowed');
       }
 
-      // Get the pitch and speed fluctuation types from data
-      const volumeFluctuationType = data.find(item => item.metric === 'Volume').fluctuationType;
-      const pitchFluctuationType = data.find(item => item.metric === 'Pitch').fluctuationType;
-      const speedFluctuationType = data.find(item => item.metric === 'Speed').fluctuationType;
+      // Get the metric data
+      const volumeData = data.find(item => item.metric === 'Volume');
+      const pitchData = data.find(item => item.metric === 'Pitch');
+      const speedData = data.find(item => item.metric === 'Speed');
       
       // Prepare the payload based on selected ranges
-      const volumeRange = parseRange(metricRanges.Volume.levelOptions[data[0].levelType]);
-      const pitchRange = parseRange(metricRanges.Pitch.levelOptions[data[1].levelType]);
-      const speedRange = parseRange(metricRanges.Speed.levelOptions[data[2].levelType]);
+      const volumeRange = parseRange(metricRanges.Volume.levelOptions[volumeData.levelType]);
+      const pitchRange = parseRange(metricRanges.Pitch.levelOptions[pitchData.levelType]);
+      const speedRange = parseRange(metricRanges.Speed.levelOptions[speedData.levelType]);
       
       // Get the separate fluctuation thresholds
-      const volumeFluctuation = volumeFluctuationLimits[volumeFluctuationType];
-      const pitchFluctuation = pitchFluctuationRanges[pitchFluctuationType];
-      const speedFluctuationMax = speedFluctuationLimits[speedFluctuationType];
+      const volumeFluctuation = volumeFluctuationLimits[volumeData.fluctuationType];
+      const pitchFluctuation = pitchFluctuationRanges[pitchData.fluctuationType];
+      const speedFluctuationMax = speedFluctuationLimits[speedData.fluctuationType];
 
       const payload = {
         // Level thresholds
@@ -146,7 +260,7 @@ const ThresholdTable = ({ patientId, readOnly }) => {
         speed_fluctuation_max: speedFluctuationMax,
       };
 
-      console.log('payload: ', payload)
+      console.log('payload: ', payload);
 
       const token = localStorage.getItem('token');
       const response = await axios.post(
@@ -239,16 +353,25 @@ const ThresholdTable = ({ patientId, readOnly }) => {
 
   return (
     <div style={{ padding: 20 }}>
-      <Table columns={columns} dataSource={data} pagination={false} bordered size="middle" />
-      <Button
-        type="primary"
-        style={{ marginTop: 16 }}
-        onClick={handleSave}
-        loading={loading}
-        disabled={readOnly}
-      >
-        Save Target Ranges
-      </Button>
+      {fetchingData ? (
+        <div style={{ textAlign: 'center', padding: 20 }}>
+          <Spin size="large" />
+          <p>Loading user thresholds...</p>
+        </div>
+      ) : (
+        <>
+          <Table columns={columns} dataSource={data} pagination={false} bordered size="middle" />
+          <Button
+            type="primary"
+            style={{ marginTop: 16 }}
+            onClick={handleSave}
+            loading={loading}
+            disabled={readOnly}
+          >
+            Save Target Ranges
+          </Button>
+        </>
+      )}
     </div>
   );
 };

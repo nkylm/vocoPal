@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 // Define a schema for permissions
 const PermissionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  analytics: { type: Boolean, default: false },
   recordings: { type: Boolean, default: false },
   accessLevel: {
     type: String,

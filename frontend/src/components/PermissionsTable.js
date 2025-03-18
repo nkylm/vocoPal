@@ -27,7 +27,6 @@ const PermissionsTable = () => {
           name: item.userId.name,
           initials: item.userId.initials,
           color: item.userId.avatarColor,
-          analytics: item.analytics,
           recordings: item.recordings,
           accessLevel: item.accessLevel,
           relation: item.userId.relation,
@@ -62,7 +61,6 @@ const PermissionsTable = () => {
       await axios.put(
         `http://localhost:8000/api/access/permissions/${userId}`,
         {
-          analytics: updatedData.analytics,
           recordings: updatedData.recordings,
           accessLevel: updatedData.accessLevel
         },
@@ -125,19 +123,6 @@ const PermissionsTable = () => {
       )
     },
     {
-      title: 'Analytics',
-      dataIndex: 'analytics',
-      key: 'analytics',
-      align: 'center',
-      render: (checked, record) => (
-        <Switch
-          checkedChildren={<CheckOutlined />}
-          checked={checked}
-          onChange={(checked) => handleSwitchChange('analytics', record.key, checked)}
-        />
-      )
-    },
-    {
       title: 'Recordings',
       dataIndex: 'recordings',
       key: 'recordings',
@@ -162,7 +147,6 @@ const PermissionsTable = () => {
         >
           <Option value="Can edit">Can edit</Option>
           <Option value="Can view">Can view</Option>
-          <Option value="No access">No access</Option>
         </Select>
       )
     },

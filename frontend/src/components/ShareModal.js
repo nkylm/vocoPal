@@ -30,7 +30,6 @@ const ShareModal = ({ open, onClose, onSuccess }) => {
         'http://localhost:8000/api/access/share',
         {
           email,
-          analytics: true, // Default to true for analytics
           recordings: accessRecordings,
           accessLevel: 'Can edit', // Default access level
           relation: isTherapist ? 'Speech Therapist' : undefined

@@ -43,7 +43,7 @@ router.get("/has-access-to", authMiddleware, async (req, res) => {
 
 // Share data with a user by email
 router.post("/share", authMiddleware, async (req, res) => {
-  const { email, analytics, recordings, accessLevel, relation } = req.body;
+  const { email, recordings, accessLevel, relation } = req.body;
 
   try {
     const currentUser = await User.findById(req.user);
@@ -68,7 +68,6 @@ router.post("/share", authMiddleware, async (req, res) => {
     // Add new pending permission
     currentUser.sharedWith.push({
       userId: targetUser._id,
-      analytics,
       recordings,
       accessLevel,
       status: "pending"  // Set initial status as pending
@@ -77,7 +76,6 @@ router.post("/share", authMiddleware, async (req, res) => {
     // Add to target user's hasAccessTo array
     targetUser.hasAccessTo.push({
       userId: currentUser._id,
-      analytics,
       recordings,
       accessLevel,
       status: "pending"  // Set initial status as pending
@@ -144,7 +142,7 @@ router.post("/respond-to-request", authMiddleware, async (req, res) => {
 
 // Update permissions for a specific user
 router.put("/permissions/:userId", authMiddleware, async (req, res) => {
-  const { analytics, recordings, accessLevel } = req.body;
+  const { recordings, accessLevel } = req.body;
   const { userId } = req.params;
 
   try {
@@ -163,7 +161,6 @@ router.put("/permissions/:userId", authMiddleware, async (req, res) => {
     }
 
     // Update the permission
-    currentUser.sharedWith[permissionIndex].analytics = analytics;
     currentUser.sharedWith[permissionIndex].recordings = recordings;
     currentUser.sharedWith[permissionIndex].accessLevel = accessLevel;
 
@@ -179,7 +176,6 @@ router.put("/permissions/:userId", authMiddleware, async (req, res) => {
       );
 
       if (targetPermissionIndex !== -1) {
-        targetUser.hasAccessTo[targetPermissionIndex].analytics = analytics;
         targetUser.hasAccessTo[targetPermissionIndex].recordings = recordings;
         targetUser.hasAccessTo[targetPermissionIndex].accessLevel = accessLevel;
 
