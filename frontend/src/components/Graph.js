@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Radio } from 'antd';
+import { Radio, Dropdown, Menu, Button } from 'antd';
 
 // Extend dayjs with required plugins
 dayjs.extend(customParseFormat);
@@ -27,6 +27,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   const [displayMode, setDisplayMode] = useState('inRange'); // 'inRange', 'aboveRange', 'belowRange'
+  const [metricType, setMetricType] = useState('level'); // 'level', 'fluctuation'
   
   // Get browser's timezone
   const browserTimezone = dayjs.tz.guess();
@@ -104,43 +105,81 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
 
     const dataForPeriod = getDataForPeriod();
 
-    console.log('dataForPeriod: ', dataForPeriod);
+    if (dataForPeriod.length === 0) {
+      return metricType === 'level' 
+        ? { volume: 0, pitch: 0, speed: 0 } 
+        : { volume_fluctuation: 0, pitch_fluctuation: 0, speed_fluctuation: 0 };
+    }
 
-    if (dataForPeriod.length === 0) return { volume: 0, pitch: 0, speed: 0 };
+    if (metricType === 'level') {
+      // Handle level metrics (volume, pitch, speed)
+      const getMetricStatus = (notes, metric) => {
+        const normalNote = `normal-${metric}`;
+        const aboveNotes = {
+          volume: 'loud',
+          pitch: 'high-pitch',
+          speed: 'fast'
+        };
+        const belowNotes = {
+          volume: 'quiet',
+          pitch: 'low-pitch',
+          speed: 'slow'
+        };
 
-    const getMetricStatus = (notes, metric) => {
-      const normalNote = `normal-${metric}`;
-      const aboveNotes = {
-        volume: 'loud',
-        pitch: 'high-pitch',
-        speed: 'fast'
+        if (rangeType === 'inRange') return notes.includes(normalNote);
+        if (rangeType === 'aboveRange') return notes.includes(aboveNotes[metric]);
+        if (rangeType === 'belowRange') return notes.includes(belowNotes[metric]);
+        return false;
       };
-      const belowNotes = {
-        volume: 'quiet',
-        pitch: 'low-pitch',
-        speed: 'slow'
+
+      const metrics = {
+        volume: 0,
+        pitch: 0,
+        speed: 0
       };
 
-      if (rangeType === 'inRange') return notes.includes(normalNote);
-      if (rangeType === 'aboveRange') return notes.includes(aboveNotes[metric]);
-      if (rangeType === 'belowRange') return notes.includes(belowNotes[metric]);
-      return false;
-    };
+      Object.keys(metrics).forEach((metric) => {
+        const matchingEntries = dataForPeriod.filter((entry) =>
+          getMetricStatus(entry.audio_notes, metric)
+        ).length;
+        metrics[metric] = (matchingEntries / dataForPeriod.length) * 100;
+      });
 
-    const metrics = {
-      volume: 0,
-      pitch: 0,
-      speed: 0
-    };
+      return metrics;
+    } else {
+      // Handle fluctuation metrics
+      const getFluctuationStatus = (notes, metric) => {
+        const stableNote = `stable-${metric}`;
+        const unstableNote = `unstable-${metric}`;
+        const specialNotes = {
+          pitch: 'monotone' // Special case for pitch
+        };
 
-    Object.keys(metrics).forEach((metric) => {
-      const matchingEntries = dataForPeriod.filter((entry) =>
-        getMetricStatus(entry.audio_notes, metric)
-      ).length;
-      metrics[metric] = (matchingEntries / dataForPeriod.length) * 100;
-    });
+        if (rangeType === 'inRange') {
+          return notes.includes(stableNote) || 
+                 (metric === 'pitch' && notes.includes(specialNotes.pitch));
+        }
+        if (rangeType === 'aboveRange') return notes.includes(unstableNote);
+        if (rangeType === 'belowRange') return false; // Not applicable for fluctuations
+        return false;
+      };
 
-    return metrics;
+      const metrics = {
+        volume_fluctuation: 0,
+        pitch_fluctuation: 0,
+        speed_fluctuation: 0
+      };
+
+      Object.keys(metrics).forEach((fullMetric) => {
+        const metric = fullMetric.split('_')[0]; // Extract base metric name
+        const matchingEntries = dataForPeriod.filter((entry) =>
+          getFluctuationStatus(entry.audio_notes, metric)
+        ).length;
+        metrics[fullMetric] = (matchingEntries / dataForPeriod.length) * 100;
+      });
+
+      return metrics;
+    }
   };
 
   const labels = getDateLabels();
@@ -149,29 +188,53 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   // Prepare chart data
   const chartData = {
     labels: labels,
-    datasets: [
-      {
-        label: 'Volume',
-        data: percentages.map((p) => p.volume),
-        borderColor: '#36A2EB',
-        backgroundColor: '#36A2EB',
-        tension: 0.4
-      },
-      {
-        label: 'Pitch',
-        data: percentages.map((p) => p.pitch),
-        borderColor: '#FF9F40',
-        backgroundColor: '#FF9F40',
-        tension: 0.4
-      },
-      {
-        label: 'Speed',
-        data: percentages.map((p) => p.speed),
-        borderColor: '#4BC0C0',
-        backgroundColor: '#4BC0C0',
-        tension: 0.4
-      }
-    ]
+    datasets: metricType === 'level' 
+      ? [
+          {
+            label: 'Volume',
+            data: percentages.map((p) => p.volume),
+            borderColor: '#36A2EB',
+            backgroundColor: '#36A2EB',
+            tension: 0.4
+          },
+          {
+            label: 'Pitch',
+            data: percentages.map((p) => p.pitch),
+            borderColor: '#FF9F40',
+            backgroundColor: '#FF9F40',
+            tension: 0.4
+          },
+          {
+            label: 'Speed',
+            data: percentages.map((p) => p.speed),
+            borderColor: '#4BC0C0',
+            backgroundColor: '#4BC0C0',
+            tension: 0.4
+          }
+        ]
+      : [
+          {
+            label: 'Volume Fluctuation',
+            data: percentages.map((p) => p.volume_fluctuation),
+            borderColor: '#36A2EB',
+            backgroundColor: '#36A2EB',
+            tension: 0.4
+          },
+          {
+            label: 'Pitch Fluctuation',
+            data: percentages.map((p) => p.pitch_fluctuation),
+            borderColor: '#FF9F40',
+            backgroundColor: '#FF9F40',
+            tension: 0.4
+          },
+          {
+            label: 'Speed Fluctuation',
+            data: percentages.map((p) => p.speed_fluctuation),
+            borderColor: '#4BC0C0',
+            backgroundColor: '#4BC0C0',
+            tension: 0.4
+          }
+        ]
   };
 
   const titles = {
@@ -179,6 +242,21 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
     aboveRange: 'Percentage Above Target Range',
     belowRange: 'Percentage Below Target Range'
   };
+
+  const dropdownItems = [
+    {
+      key: 'inRange',
+      label: 'Percentage in Target Range'
+    },
+    {
+      key: 'aboveRange',
+      label: 'Percentage Above Target Range'
+    },
+    {
+      key: 'belowRange',
+      label: 'Percentage Below Target Range'
+    }
+  ];
 
   return (
     <div>
@@ -190,15 +268,29 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
           marginBottom: '20px'
         }}
       >
-        <h2>{titles[displayMode]}</h2>
+        <h2>
+          <Dropdown
+            menu={{ 
+              items: dropdownItems,
+              onClick: (e) => setDisplayMode(e.key)
+            }}
+            trigger={['click']}
+          >
+            <a
+              onClick={(e) => e.preventDefault()}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+              {titles[displayMode]} <span style={{ fontSize: '0.8em' }}>▼</span>
+            </a>
+          </Dropdown>
+        </h2>
         <Radio.Group
-          value={displayMode}
-          onChange={(e) => setDisplayMode(e.target.value)}
+          value={metricType}
+          onChange={(e) => setMetricType(e.target.value)}
           buttonStyle="solid"
         >
-          <Radio.Button value="inRange">Level</Radio.Button>
-          <Radio.Button value="aboveRange">Above Range</Radio.Button>
-          <Radio.Button value="belowRange">Below Range</Radio.Button>
+          <Radio.Button value="level">Level</Radio.Button>
+          <Radio.Button value="fluctuation">Fluctuation</Radio.Button>
         </Radio.Group>
       </div>
       <Line
@@ -224,6 +316,10 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
           plugins: {
             legend: {
               position: 'top'
+            },
+            title: {
+              display: true,
+              text: metricType === 'level' ? 'Voice Level Metrics' : 'Voice Fluctuation Metrics'
             }
           }
         }}
@@ -236,7 +332,26 @@ GraphComponent.propTypes = {
   speechData: PropTypes.arrayOf(
     PropTypes.shape({
       date_recorded: PropTypes.string.isRequired,
-      audio_notes: PropTypes.arrayOf(PropTypes.string).isRequired
+      audio_notes: PropTypes.arrayOf(PropTypes.string).isRequired,
+      metrics: PropTypes.shape({
+        volume: PropTypes.number.isRequired,
+        pitch: PropTypes.number.isRequired,
+        speed: PropTypes.number.isRequired,
+        pitch_fluctuation: PropTypes.number.isRequired,
+        speed_fluctuation: PropTypes.number.isRequired
+      }),
+      thresholds: PropTypes.shape({
+        volume_min: PropTypes.number.isRequired,
+        volume_max: PropTypes.number.isRequired,
+        pitch_min: PropTypes.number.isRequired,
+        pitch_max: PropTypes.number.isRequired,
+        speed_min: PropTypes.number.isRequired,
+        speed_max: PropTypes.number.isRequired,
+        volume_fluctuation_max: PropTypes.number.isRequired,
+        pitch_fluctuation_min: PropTypes.number.isRequired,
+        pitch_fluctuation_max: PropTypes.number.isRequired,
+        speed_fluctuation_max: PropTypes.number.isRequired
+      })
     })
   ).isRequired,
   selectedDate: PropTypes.string,
