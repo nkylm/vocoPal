@@ -67,6 +67,29 @@ const getAudioNotes = (metrics, thresholds) => {
     notes.push("normal-speed");
   }
 
+  // Volume fluctuation checks
+  if (metrics.volume_fluctuation > thresholds.volume_fluctuation_max) {
+    notes.push("unstable-volume");
+  } else {
+    notes.push("stable-volume");
+  }
+
+  // Pitch fluctuation checks
+  if (metrics.pitch_fluctuation > thresholds.pitch_fluctuation_max) {
+    notes.push("unstable-pitch");
+  } else if (metrics.pitch < thresholds.pitch_min) {
+    notes.push("monotone");
+  } else {
+    notes.push("stable-pitch");
+  }
+
+  // Speed fluctuation checks
+  if (metrics.speed_fluctuation > thresholds.speed_fluctuation_max) {
+    notes.push("unstable-speed");
+  } else {
+    notes.push("stable-speed");
+  }
+
   return notes;
 };
 
@@ -78,7 +101,11 @@ const isOutsideThresholds = (metrics, thresholds) => {
     metrics.pitch > thresholds.pitch_max ||
     metrics.pitch < thresholds.pitch_min ||
     metrics.speed > thresholds.speed_max ||
-    metrics.speed < thresholds.speed_min
+    metrics.speed < thresholds.speed_min ||
+    metrics.volume_fluctuation > thresholds.volume_fluctuation_max ||
+    metrics.pitch_fluctuation > thresholds.pitch_fluctuation_max ||
+    metrics.pitch_fluctuation < thresholds.pitch_fluctuation_min ||
+    metrics.speed_fluctuation > thresholds.speed_fluctuation_max 
   );
 };
 
@@ -166,8 +193,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("userThresholds: ", userThresholds);
 
     // Send the file to the Python microservice
-    const microserviceUrl =
-      process.env.FLASK_HOSTED_URL || process.env.FLASK_URL;
+    const microserviceUrl = process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
@@ -184,9 +210,12 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
 
     // Prepare metrics
     const metrics = {
-      volume: 65, // hard coded for now
+      volume: response.data.relative_volume,
       pitch: response.data.f0_mean,
       speed: response.data.rate_of_speech,
+      volume_fluctuation: response.data.volume_fluctuation,
+      pitch_fluctuation: response.data.pitch_fluctuation,
+      speed_fluctuation: response.data.speech_rate_fluctuation
     };
 
     let s3Url = null;
@@ -221,6 +250,10 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
         pitch_max: userThresholds.pitch_max,
         speed_min: userThresholds.speed_min,
         speed_max: userThresholds.speed_max,
+        volume_fluctuation_max: userThresholds.volume_fluctuation_max,
+        pitch_fluctuation_min: userThresholds.pitch_fluctuation_min, 
+        pitch_fluctuation_max: userThresholds.pitch_fluctuation_max, 
+        speed_fluctuation_max: userThresholds.speed_fluctuation_max
       },
       audio_notes: audioNotes,
       recording_url: s3Url, // Will be null if within thresholds
@@ -230,11 +263,11 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
 
     console.log(
       "process.env.BACKEND_HOSTED_URL: ",
-      process.env.BACKEND_HOSTED_URL,
+      process.env.BACKEND_URL,
     );
 
     const speechDataResponse = await axios.post(
-      `${process.env.BACKEND_HOSTED_URL}/api/speechData`,
+      `${process.env.BACKEND_URL}/api/speechData`,
       speechDataPayload,
     );
 

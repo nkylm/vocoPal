@@ -79,6 +79,13 @@ router.post("/", async (req, res) => {
       "loud",
       "quiet",
       "normal-volume",
+      "unstable-volume",
+      "stable-volume",
+      "unstable-pitch",
+      "monotone",
+      "stable-pitch",
+      "unstable-speed",
+      "stable-speed"
     ];
 
     const invalidNotes = audio_notes.filter(

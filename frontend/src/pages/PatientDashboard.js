@@ -26,7 +26,11 @@ const PatientDashboard = () => {
   const [analytics, setAnalytics] = useState({
     volume: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
     pitch: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    speed: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 }
+    speed: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
+    // Add fluctuation analytics
+    volumeFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 },
+    pitchFluctuation: { inRange: 0, unstable: 0, monotone: 0, lastWeekInRange: 0 },
+    speedFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 }
   });
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
@@ -84,6 +88,48 @@ const PatientDashboard = () => {
             )
           : { inRange: 0, above: 0, below: 0 };
 
+      // Calculate fluctuation metrics
+      const volumeFluctuationMetrics =
+        speechData.length > 0
+          ? speechData.reduce(
+              (acc, data) => {
+                // Assuming volume_fluctuation is stored in data.metrics
+                const volumeFluctuation = data.metrics.volume_fluctuation || 0;
+                if (volumeFluctuation > thresholds.volume_fluctuation_max) acc.unstable++;
+                else acc.inRange++;
+                return acc;
+              },
+              { inRange: 0, unstable: 0 }
+            )
+          : { inRange: 0, unstable: 0 };
+
+      const pitchFluctuationMetrics =
+        speechData.length > 0
+          ? speechData.reduce(
+              (acc, data) => {
+                const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
+                if (pitchFluctuation > thresholds.pitch_fluctuation_max) acc.unstable++;
+                else if (pitchFluctuation < thresholds.pitch_fluctuation_min) acc.monotone++;
+                else acc.inRange++;
+                return acc;
+              },
+              { inRange: 0, unstable: 0, monotone: 0 }
+            )
+          : { inRange: 0, unstable: 0, monotone: 0 };
+
+      const speedFluctuationMetrics =
+        speechData.length > 0
+          ? speechData.reduce(
+              (acc, data) => {
+                const speedFluctuation = data.metrics.speed_fluctuation || 0;
+                if (speedFluctuation > thresholds.speed_fluctuation_max) acc.unstable++;
+                else acc.inRange++;
+                return acc;
+              },
+              { inRange: 0, unstable: 0 }
+            )
+          : { inRange: 0, unstable: 0 };
+
       // Calculate last week's in-range percentages
       const lastWeekVolumeInRange =
         lastWeekSpeechData.length > 0
@@ -112,6 +158,38 @@ const PatientDashboard = () => {
           ? lastWeekSpeechData.reduce((acc, data) => {
               return data.metrics.speed >= data.thresholds.speed_min &&
                 data.metrics.speed <= data.thresholds.speed_max
+                ? acc + 1
+                : acc;
+            }, 0)
+          : 0;
+
+      // Calculate last week's fluctuation in-range percentages
+      const lastWeekVolumeFluctuationInRange =
+        lastWeekSpeechData.length > 0
+          ? lastWeekSpeechData.reduce((acc, data) => {
+              const volumeFluctuation = data.metrics.volume_fluctuation || 0;
+              return volumeFluctuation <= data.thresholds.volume_fluctuation_max
+                ? acc + 1
+                : acc;
+            }, 0)
+          : 0;
+
+      const lastWeekPitchFluctuationInRange =
+        lastWeekSpeechData.length > 0
+          ? lastWeekSpeechData.reduce((acc, data) => {
+              const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
+              return pitchFluctuation >= data.thresholds.pitch_fluctuation_min &&
+                pitchFluctuation <= data.thresholds.pitch_fluctuation_max
+                ? acc + 1
+                : acc;
+            }, 0)
+          : 0;
+
+      const lastWeekSpeedFluctuationInRange =
+        lastWeekSpeechData.length > 0
+          ? lastWeekSpeechData.reduce((acc, data) => {
+              const speedFluctuation = data.metrics.speed_fluctuation || 0;
+              return speedFluctuation <= data.thresholds.speed_fluctuation_max
                 ? acc + 1
                 : acc;
             }, 0)
@@ -146,6 +224,29 @@ const PatientDashboard = () => {
           lastWeekInRange: lastWeekTotal
             ? Math.round((lastWeekSpeedInRange / lastWeekTotal) * 100)
             : 0
+        },
+        // Add fluctuation analytics
+        volumeFluctuation: {
+          inRange: total ? Math.round((volumeFluctuationMetrics.inRange / total) * 100) : 0,
+          unstable: total ? Math.round((volumeFluctuationMetrics.unstable / total) * 100) : 0,
+          lastWeekInRange: lastWeekTotal
+            ? Math.round((lastWeekVolumeFluctuationInRange / lastWeekTotal) * 100)
+            : 0
+        },
+        pitchFluctuation: {
+          inRange: total ? Math.round((pitchFluctuationMetrics.inRange / total) * 100) : 0,
+          unstable: total ? Math.round((pitchFluctuationMetrics.unstable / total) * 100) : 0,
+          monotone: total ? Math.round((pitchFluctuationMetrics.monotone / total) * 100) : 0,
+          lastWeekInRange: lastWeekTotal
+            ? Math.round((lastWeekPitchFluctuationInRange / lastWeekTotal) * 100)
+            : 0
+        },
+        speedFluctuation: {
+          inRange: total ? Math.round((speedFluctuationMetrics.inRange / total) * 100) : 0,
+          unstable: total ? Math.round((speedFluctuationMetrics.unstable / total) * 100) : 0,
+          lastWeekInRange: lastWeekTotal
+            ? Math.round((lastWeekSpeedFluctuationInRange / lastWeekTotal) * 100)
+            : 0
         }
       });
     }
@@ -166,7 +267,11 @@ const PatientDashboard = () => {
             pitch_min: threshold.pitch_min,
             pitch_max: threshold.pitch_max,
             speed_min: threshold.speed_min,
-            speed_max: threshold.speed_max
+            speed_max: threshold.speed_max,
+            volume_fluctuation_max: threshold.volume_fluctuation_max,
+            pitch_fluctuation_min: threshold.pitch_fluctuation_min,
+            pitch_fluctuation_max: threshold.pitch_fluctuation_max,
+            speed_fluctuation_max: threshold.speed_fluctuation_max
           });
         }
       } catch (error) {
@@ -367,6 +472,138 @@ const PatientDashboard = () => {
       </Card>
     );
   };
+  
+  // New function to render fluctuation metric cards
+  const renderFluctuationMetricCard = (title, icon, data, range) => {
+    const getTitleBoxColor = (title) => {
+      switch (title) {
+        case 'Volume':
+          return '#e6f4ff';
+        case 'Pitch':
+          return '#fff7e6';
+        case 'Speed':
+          return '#f9f0ff';
+        default:
+          return '#f5f5f5';
+      }
+    };
+
+    return (
+      <Card className="metric-card" bodyStyle={{ padding: '12px' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            backgroundColor: getTitleBoxColor(title),
+            padding: '4px 12px',
+            borderRadius: '6px',
+            marginBottom: '12px'
+          }}
+        >
+          {React.cloneElement(icon, {
+            style: { fontSize: '16px', marginRight: '8px', color: '#000000' }
+          })}
+          <Text strong>{title}</Text>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div
+            style={{
+              backgroundColor: '#f0f9f0',
+              borderRadius: '8px',
+              padding: '12px',
+              flex: '1.5',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}
+          >
+            <Title level={2} style={{ margin: '0', fontSize: '36px', textAlign: 'center' }}>
+              {data.inRange}%
+            </Title>
+            <Text style={{ textAlign: 'center' }}>In target range</Text>
+            <Text type="secondary" style={{ textAlign: 'center' }}>
+              {range}
+            </Text>
+            <div style={{ marginTop: 'auto', textAlign: 'center' }}>
+              <Text type="secondary">Last week: </Text>
+              <span
+                style={{
+                  backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {data.inRange - data.lastWeekInRange > 0 ? (
+                  <ArrowUpOutlined />
+                ) : (
+                  <ArrowDownOutlined />
+                )}
+                {Math.abs(data.inRange - data.lastWeekInRange)}%
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1' }}>
+            <div
+              style={{
+                backgroundColor: '#f5f5f5',
+                padding: '12px',
+                borderRadius: '8px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}
+            >
+              <Title level={3} style={{ margin: '0' }}>
+                {data.unstable}%
+              </Title>
+              <Text type="secondary">
+                Unstable <ArrowUpOutlined />
+              </Text>
+            </div>
+            {title === 'Pitch' && (
+              <div
+                style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
+                <Title level={3} style={{ margin: '0' }}>
+                  {data.monotone}%
+                </Title>
+                <Text type="secondary">
+                  Monotone <ArrowDownOutlined />
+                </Text>
+              </div>
+            )}
+            {title !== 'Pitch' && (
+              <div
+                style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  visibility: 'hidden' // Hide this div if not pitch to maintain layout
+                }}
+              >
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="dashboard-layout">
@@ -427,6 +664,34 @@ const PatientDashboard = () => {
                           <ThunderboltOutlined style={{ fontSize: '24px', color: '#52c41a' }} />,
                           analytics.speed,
                           `${thresholds?.speed_min}-${thresholds?.speed_max} syll/sec`
+                        )}
+                      </Col>
+                    </Row>
+
+                    <Title level={4} className="mt-6">Fluctuation</Title>
+                    <Row gutter={[16, 16]}>
+                      <Col xs={24} md={8}>
+                        {renderFluctuationMetricCard(
+                          'Volume',
+                          <SoundOutlined style={{ fontSize: '24px', color: '#1890ff' }} />,
+                          analytics.volumeFluctuation,
+                          `<${thresholds?.volume_fluctuation_max} dB`
+                        )}
+                      </Col>
+                      <Col xs={24} md={8}>
+                        {renderFluctuationMetricCard(
+                          'Pitch',
+                          <RiseOutlined style={{ fontSize: '24px', color: '#faad14' }} />,
+                          analytics.pitchFluctuation,
+                          `${thresholds?.pitch_fluctuation_min}-${thresholds?.pitch_fluctuation_max} Hz`
+                        )}
+                      </Col>
+                      <Col xs={24} md={8}>
+                        {renderFluctuationMetricCard(
+                          'Speed',
+                          <ThunderboltOutlined style={{ fontSize: '24px', color: '#52c41a' }} />,
+                          analytics.speedFluctuation,
+                          `<${thresholds?.speed_fluctuation_max} syll/sec`
                         )}
                       </Col>
                     </Row>

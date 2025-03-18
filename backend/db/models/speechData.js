@@ -11,6 +11,9 @@ const SpeechDataSchema = new mongoose.Schema({
     volume: { type: Number, required: true },
     pitch: { type: Number, required: true },
     speed: { type: Number, required: true },
+    volume_fluctuation: {type: Number, required: true},
+    pitch_fluctuation: {type: Number, required: true},
+    speed_fluctuation: {type: Number, required: true},
   },
   thresholds: {
     volume_min: { type: Number, required: true },
@@ -19,6 +22,10 @@ const SpeechDataSchema = new mongoose.Schema({
     pitch_max: { type: Number, required: true },
     speed_min: { type: Number, required: true },
     speed_max: { type: Number, required: true },
+    volume_fluctuation_max: { type: Number, required: true },
+    pitch_fluctuation_min: { type: Number, required: true },
+    pitch_fluctuation_max: { type: Number, required: true },
+    speed_fluctuation_max: { type: Number, required: true },
   },
   audio_notes: [
     {
@@ -33,6 +40,13 @@ const SpeechDataSchema = new mongoose.Schema({
         "loud",
         "quiet",
         "normal-volume",
+        "unstable-volume",
+        "stable-volume",
+        "unstable-pitch",
+        "monotone",
+        "stable-pitch",
+        "unstable-speed",
+        "stable-speed"
       ],
     },
   ],

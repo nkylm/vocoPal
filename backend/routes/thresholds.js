@@ -39,6 +39,10 @@ router.post("/:patientId", authMiddleware, async (req, res) => {
       pitch_max,
       speed_min,
       speed_max,
+      volume_fluctuation_max,
+      pitch_fluctuation_min,
+      pitch_fluctuation_max,
+      speed_fluctuation_max
     } = req.body;
 
     const { patientId } = req.params;
@@ -52,7 +56,11 @@ router.post("/:patientId", authMiddleware, async (req, res) => {
       pitch_min == null ||
       pitch_max == null ||
       speed_min == null ||
-      speed_max == null
+      speed_max == null ||
+      volume_fluctuation_max == null ||
+      pitch_fluctuation_min == null ||
+      pitch_fluctuation_max == null ||
+      speed_fluctuation_max == null
     ) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -68,6 +76,10 @@ router.post("/:patientId", authMiddleware, async (req, res) => {
       existingThreshold.pitch_max = pitch_max;
       existingThreshold.speed_min = speed_min;
       existingThreshold.speed_max = speed_max;
+      existingThreshold.volume_fluctuation_max = volume_fluctuation_max; 
+      existingThreshold.pitch_fluctuation_min = pitch_fluctuation_min; 
+      existingThreshold.pitch_fluctuation_max = pitch_fluctuation_max; 
+      existingThreshold.speed_fluctuation_max = speed_fluctuation_max; 
 
       const updatedThreshold = await existingThreshold.save();
       return res.status(200).json({
@@ -85,6 +97,10 @@ router.post("/:patientId", authMiddleware, async (req, res) => {
         pitch_max,
         speed_min,
         speed_max,
+        volume_fluctuation_max,
+        pitch_fluctuation_min,
+        pitch_fluctuation_max,
+        speed_fluctuation_max
       });
 
       const savedThreshold = await newThreshold.save();
