@@ -27,48 +27,79 @@ features = [
     "number_of_syllables", "number_of_pauses", "rate_of_speech", "articulation_rate",
     "speaking_duration", "original_duration", "balance", "f0_mean", "f0_std",
     "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75",
-    "speech_rate_fluctuation", "pitch_fluctuation", "relative_volume"
+    "speech_rate_fluctuation", "pitch_fluctuation", "relative_volume", "ambient_noise"
 ]
 
-def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
+def split_audio_into_chunks(y, sr, chunk_duration=5.0):
     """
-    Calculate speech rate fluctuation by analyzing chunks of audio.
+    Split audio into chunks of specified duration.
     
     Args:
-        audio_path: Path to the audio file
+        y: Audio signal
+        sr: Sample rate
         chunk_duration: Duration of each chunk in seconds
     
     Returns:
-        float: Standard deviation of speech rates across chunks
-        list: List of speech rates for each chunk
+        list: List of chunk paths
     """
-    # Load audio
-    y, sr = librosa.load(audio_path, sr=None)
-    
     # Calculate chunk size in samples
     chunk_size = int(chunk_duration * sr)
     
-    # Split audio into chunks
-    chunk_rates = []
-    
-    # Create all chunks first
-    chunks = []
+    # Create chunks and save them
     chunk_paths = []
     for i in range(0, len(y), chunk_size):
         chunk = y[i:i + chunk_size]
         # Skip chunks that are too short (less than 1 second)
         if len(chunk) < sr:
             continue
-        chunks.append(chunk)
         chunk_path = os.path.join(root_folder, f"audio/temp_chunk_{i}.wav")
         chunk_paths.append(chunk_path)
         sf.write(chunk_path, chunk, sr)
     
+    return chunk_paths
+
+def calculate_chunk_volume(chunk_path, frame_length=2048):
+    """
+    Calculate volume difference for a single chunk.
+    
+    Args:
+        chunk_path: Path to the audio chunk
+        frame_length: Frame length for analysis
+    
+    Returns:
+        tuple: (volume_difference, noise_db)
+    """
+    y, sr = librosa.load(chunk_path, sr=None)
+    return calculate_relative_volume(y, sr, frame_length)
+
+def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
+    """
+    Calculate speech rate and volume fluctuations by analyzing chunks of audio.
+    
+    Args:
+        audio_path: Path to the audio file
+        chunk_duration: Duration of each chunk in seconds
+    
+    Returns:
+        tuple: (speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes)
+    """
+    # Load audio
+    y, sr = librosa.load(audio_path, sr=None)
+    
+    # Split audio into chunks
+    chunk_paths = split_audio_into_chunks(y, sr, chunk_duration)
+    
+    chunk_rates = []
+    chunk_volumes = []
+    
+    print(f"\nAnalyzing {len(chunk_paths)} chunks:")
+    print("-" * 50)
+    
     try:
         # Analyze all chunks
-        for chunk_path in chunk_paths:
+        for i, chunk_path in enumerate(chunk_paths):
             try:
-                # Analyze chunk using Praat
+                # Analyze chunk using Praat for speech rate
                 objects = run_file(praat_script, -20, 2, 0.3, 0, chunk_path, root_folder, 80, 400, 0.01, capture_output=True)
                 chunk_data = str(objects[1]).strip().split()
                 
@@ -76,8 +107,19 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
                 if len(chunk_data) >= 3:  # Ensure we have enough data
                     speech_rate = float(chunk_data[2])
                     chunk_rates.append(speech_rate)
-            except:
-                # Skip chunks that can't be analyzed
+                
+                # Calculate volume difference for this chunk
+                volume_diff, noise_db = calculate_chunk_volume(chunk_path)  # Get both values
+                chunk_volumes.append(volume_diff)
+                
+                print(f"Chunk {i+1}:")
+                print(f"  Volume difference: {volume_diff:.2f} dB")
+                print(f"  Noise level: {noise_db:.2f} dB")
+                print(f"  Speech rate: {speech_rate:.2f} syllables/sec")
+                print("-" * 50)
+                
+            except Exception as e:
+                print(f"Error processing chunk {chunk_path}: {str(e)}")
                 continue
     finally:
         # Clean up all temporary files at once
@@ -85,13 +127,24 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
             if os.path.exists(chunk_path):
                 os.remove(chunk_path)
     
-    # Calculate fluctuation (standard deviation)
+    # Calculate fluctuations
     if chunk_rates:
-        fluctuation = np.std(chunk_rates)
+        speech_rate_fluctuation = max(chunk_rates) - min(chunk_rates)  # Difference between max and min
     else:
-        fluctuation = 0.0
+        speech_rate_fluctuation = 0.0
         
-    return fluctuation, chunk_rates
+    volume_fluctuation = np.std(chunk_volumes) if chunk_volumes else 0.0
+    
+    print("\nSummary:")
+    print(f"Number of chunks analyzed: {len(chunk_volumes)}")
+    print(f"Volume fluctuation (std dev): {volume_fluctuation:.2f} dB")
+    print(f"Speech rate fluctuation (max-min): {speech_rate_fluctuation:.2f} syllables/sec")
+    print(f"Max speech rate: {max(chunk_rates):.2f} syllables/sec")
+    print(f"Min speech rate: {min(chunk_rates):.2f} syllables/sec")
+    print(f"Average volume difference: {np.mean(chunk_volumes):.2f} dB")
+    print(f"Average speech rate: {np.mean(chunk_rates):.2f} syllables/sec")
+        
+    return speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes
 
 def calculate_pitch_fluctuation(f0_min, f0_max):
     """
@@ -107,6 +160,22 @@ def calculate_pitch_fluctuation(f0_min, f0_max):
     return float(f0_max) - float(f0_min)
     "f0_median", "f0_min", "f0_max", "f0_quantile25", "f0_quan75"
 
+def classify_ambient_noise(noise_db):
+    """
+    Classify ambient noise level based on dB value.
+    
+    Args:
+        noise_db: Noise level in dB
+    
+    Returns:
+        str: Classification of ambient noise ("muted", "quiet", or "noisy")
+    """
+    if noise_db < -50:  # Very quiet background
+        return "muted"
+    elif noise_db < -30:  # Moderate background noise
+        return "quiet"
+    else:  # High background noise
+        return "noisy"
 
 def calculate_relative_volume(y, sr, frame_length=2048):
     """
@@ -118,7 +187,7 @@ def calculate_relative_volume(y, sr, frame_length=2048):
         frame_length: Frame length for analysis
     
     Returns:
-        float: Volume difference between speech and noise in dB
+        tuple: (volume_difference, noise_db)
     """
     # Create preprocessed version for analysis
     y_processed = librosa.effects.preemphasis(y.copy())
@@ -174,10 +243,10 @@ def calculate_relative_volume(y, sr, frame_length=2048):
     else:
         noise_vol_db = -np.inf
     
-    return speech_vol_db - noise_vol_db
+    return speech_vol_db - noise_vol_db, noise_vol_db
 
 def analyze_audio_file():
-    """Analyze audio file and return metrics including speech rate fluctuation"""
+    """Analyze audio file and return metrics including speech rate and volume fluctuations"""
     # Load audio for volume analysis
     y, sr = librosa.load(output_path, sr=None)
     
@@ -191,19 +260,21 @@ def analyze_audio_file():
     z5_single = z5[:, 0]
     
     # Create dictionary with original features
-    json_dict = dict(zip(features, z5_single))  # Exclude the last two features (speech_rate_fluctuation and pitch_fluctuation)
+    json_dict = dict(zip(features, z5_single))  # Exclude the last three features
     
     # Calculate and add pitch fluctuation first (faster calculation)
     pitch_fluctuation = calculate_pitch_fluctuation(json_dict["f0_min"], json_dict["f0_max"])
     json_dict["pitch_fluctuation"] = pitch_fluctuation
     
-    # Calculate speech rate fluctuation last (slower calculation)
-    fluctuation, chunk_rates = calculate_speech_rate_fluctuation(output_path)
-    json_dict["speech_rate_fluctuation"] = float(fluctuation)
+    # Calculate speech rate and volume fluctuations last (slower calculation)
+    speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes = calculate_speech_rate_fluctuation(output_path)
+    json_dict["speech_rate_fluctuation"] = float(speech_rate_fluctuation)
+    json_dict["volume_fluctuation"] = float(volume_fluctuation)
     
-    # Calculate and add relative volume
-    relative_volume = calculate_relative_volume(y, sr)
+    # Calculate and add overall relative volume and ambient noise
+    relative_volume, noise_db = calculate_relative_volume(y, sr)
     json_dict["relative_volume"] = float(relative_volume)
+    json_dict["ambient_noise"] = classify_ambient_noise(noise_db)
     
     return json_dict
 
