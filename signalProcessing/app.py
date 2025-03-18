@@ -308,6 +308,8 @@ def process_audio():
     try:
         # Save with fixed filename
         with open(output_path, 'wb') as output_file:
+            logger.info(f'Output path: {output_path}')
+            logger.info(f'Output file: {output_file}')
             audio_file.save(output_file) 
             output_file.flush()
 
