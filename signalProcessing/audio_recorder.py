@@ -1,7 +1,7 @@
 import pyaudio
 import wave
 
-def record_audio(filename, record_seconds=10, chunk=1024, format=pyaudio.paInt16, channels=2, rate=44100):
+def record_audio(filename, record_seconds=20, chunk=1024, format=pyaudio.paInt16, channels=2, rate=44100):
     """Records audio for a specified duration and saves it to a WAV file."""
     p = pyaudio.PyAudio()
     stream = p.open(format=format,
@@ -29,4 +29,4 @@ def record_audio(filename, record_seconds=10, chunk=1024, format=pyaudio.paInt16
     stream.close()
     p.terminate()
 
-record_audio("test.wav", 10)
+record_audio(r'C:\Users\Shun\Documents\4A\CAPSTONE\vocoPal\signalProcessing\audio\test.wav', 20)

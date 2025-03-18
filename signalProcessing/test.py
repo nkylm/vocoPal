@@ -208,7 +208,7 @@ def plot_diagnostics(results):
     plt.show()
 
 # Usage example
-results = analyze_audio(r"C:\Users\Shun\Documents\4A\CAPSTONE\vocoPal\signalProcessing\audio\long_output.wav")
+results = analyze_audio(r"C:\Users\Shun\Documents\4A\CAPSTONE\vocoPal\signalProcessing\audio\test.wav")
 print(f"\nResults:")
 print(f"Speech volume: {results['speech_db']:.2f} dB")
 print(f"Noise volume: {results['noise_db']:.2f} dB")
