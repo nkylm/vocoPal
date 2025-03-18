@@ -269,6 +269,8 @@ def analyze_audio_file():
     # Load audio for volume analysis
     y, sr = librosa.load(output_path, sr=None)
 
+    logger.info(f'output_path: {output_path}')
+
     logger.info(f'y, sr: {y, sr}')
     
     # Run main Praat analysis first to get all metrics
@@ -304,7 +306,7 @@ def analyze_audio_file():
     json_dict["ambient_noise"] = classify_ambient_noise(noise_db)
     
     logger.info(f'relative_volume, noise_db: {relative_volume, noise_db}')
-    
+
     return json_dict
 
 @app.route('/process', methods=['POST'])
