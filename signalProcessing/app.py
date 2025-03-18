@@ -281,11 +281,14 @@ def analyze_audio_file():
 
 @app.route('/process', methods=['POST'])
 def process_audio():
+    print('processing audio')
+
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file uploaded"}), 400
 
     audio_file = request.files['audio']
 
+    print('analyzing audio')
     try:
         # Save with fixed filename
         with open(output_path, 'wb') as output_file:
@@ -295,6 +298,7 @@ def process_audio():
             # Pass explicit path to analysis function
             analysis_result = analyze_audio_file()
 
+            print('analysis_result:', analysis_result)
             # Check if the result contains an error
             if "error" in analysis_result:
                 return jsonify(analysis_result), 400

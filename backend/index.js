@@ -193,7 +193,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     console.log("userThresholds: ", userThresholds);
 
     // Send the file to the Python microservice
-    const microserviceUrl = process.env.FLASK_HOSTED_URL;
+    const microserviceUrl = process.env.FLASK_URL;
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(audioFilePath));
 
@@ -267,7 +267,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     );
 
     const speechDataResponse = await axios.post(
-      `${process.env.BACKEND_HOSTED_URL}/api/speechData`,
+      `${process.env.BACKEND_URL}/api/speechData`,
       speechDataPayload,
     );
 
