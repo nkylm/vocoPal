@@ -263,12 +263,19 @@ def calculate_relative_volume(y, sr, frame_length=2048):
 
 def analyze_audio_file():
     """Analyze audio file and return metrics including speech rate and volume fluctuations"""
+    
+    logger.info('analyze_audio_file')
+
     # Load audio for volume analysis
     y, sr = librosa.load(output_path, sr=None)
+
+    logger.info(f'y, sr: {y, sr}')
     
     # Run main Praat analysis first to get all metrics
     objects = run_file(praat_script, -20, 2, 0.3, 0, output_path, root_folder, 80, 400, 0.01, capture_output=True)
     z1=str(objects[1])
+
+    logger.info(f'objects: {object}')
 
     if z1 == "A noisy background or unnatural-sounding speech detected. No result try again\n":
         return {"error": "Noisy background or unnatural-sounding speech detected, analysis failed"}
@@ -281,16 +288,22 @@ def analyze_audio_file():
     
     # Create dictionary with original features
     json_dict = dict(zip(features, z5_single))  # Exclude the last three features
+
+    logger.info(f'json_dict: {json_dict}')
     
     # Calculate speech rate and volume fluctuations last (slower calculation)
     speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes = calculate_speech_rate_fluctuation(output_path)
     json_dict["speech_rate_fluctuation"] = float(speech_rate_fluctuation)
     json_dict["volume_fluctuation"] = float(volume_fluctuation)
     
+    logger.info(f'speech_rate_fluctuation: {speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes}')
+
     # Calculate and add overall relative volume and ambient noise
     relative_volume, noise_db = calculate_relative_volume(y, sr)
     json_dict["relative_volume"] = float(relative_volume)
     json_dict["ambient_noise"] = classify_ambient_noise(noise_db)
+    
+    logger.info(f'relative_volume, noise_db: {relative_volume, noise_db}')
     
     return json_dict
 
