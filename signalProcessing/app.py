@@ -281,14 +281,14 @@ def analyze_audio_file():
 
 @app.route('/process', methods=['POST'])
 def process_audio():
-    print('processing audio')
+    app.logger.info('processing audio')
 
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file uploaded"}), 400
 
     audio_file = request.files['audio']
 
-    print('analyzing audio')
+    app.logger.info('analyzing audio')
     try:
         # Save with fixed filename
         with open(output_path, 'wb') as output_file:
