@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import contextlib
 import subprocess
 import io
 import os
 import re
 import glob
+import logging
+import sys
 
 import parselmouth
 from parselmouth.praat import call, run_file
@@ -18,6 +21,18 @@ import soundfile as sf
 from analysis_parser import parse_analysis_output, print_analysis_history
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+# Configure logging to both file and console
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 root_folder = os.path.abspath("./")
 praat_script = root_folder + "/myspsolution.praat"
@@ -281,14 +296,15 @@ def analyze_audio_file():
 
 @app.route('/process', methods=['POST'])
 def process_audio():
-    app.logger.info('processing audio')
-
+    logger.info('Received audio processing request')
+    
     if 'audio' not in request.files:
+        logger.warning('No audio file in request')
         return jsonify({"error": "No audio file uploaded"}), 400
 
     audio_file = request.files['audio']
+    logger.info('Processing audio file')
 
-    app.logger.info('analyzing audio')
     try:
         # Save with fixed filename
         with open(output_path, 'wb') as output_file:
@@ -297,18 +313,26 @@ def process_audio():
 
             # Pass explicit path to analysis function
             analysis_result = analyze_audio_file()
+            logger.info('Analysis completed successfully')
+            logger.info(f'Analysis result: {analysis_result}')
 
-            print('analysis_result:', analysis_result)
             # Check if the result contains an error
             if "error" in analysis_result:
+                logger.warning(f'Analysis failed: {analysis_result["error"]}')
                 return jsonify(analysis_result), 400
 
-        # os.remove(output_path)
-
-        return analysis_result
+        return jsonify(analysis_result)
 
     except Exception as e:
+        logger.error(f'Error processing audio: {str(e)}', exc_info=True)
         return jsonify({"error": f"Processing failed: {str(e)}"}), 500
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    logger.info('Health check requested')
+    return jsonify({"status": "healthy"}), 200
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8001)
+    port = int(os.environ.get("PORT", 8001))
+    logger.info(f'Starting server on port {port}')
+    app.run(host="0.0.0.0", port=port)
