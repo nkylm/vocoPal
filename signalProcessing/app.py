@@ -217,17 +217,30 @@ def calculate_relative_volume(y, sr, frame_length=2048):
     Returns:
         tuple: (volume_difference, noise_db)
     """
+    logger.info('calculate_relative_volume')
+
     # Create preprocessed version for analysis
     y_processed = librosa.effects.preemphasis(y.copy())
+
+    logger.info(f'y_processed: {y_processed}')
     
     # Calculate features with 75% overlap
     hop_length = frame_length // 4
     rms = librosa.feature.rms(y=y_processed, frame_length=frame_length, hop_length=hop_length)[0]
+
+    logger.info(f'rms: {rms}')
+
     spectral_centroid = librosa.feature.spectral_centroid(y=y_processed, sr=sr, hop_length=hop_length)[0]
+
+    logger.info(f'specral_centroid: {spectral_centroid}')
+
     zero_crossing = librosa.feature.zero_crossing_rate(y=y_processed, frame_length=frame_length, hop_length=hop_length)[0]
     
+    logger.info(f'zero_crossing: {zero_crossing}')
+
     # Adaptive threshold calculation
     noise_sample = y_processed[:int(0.5*sr)]
+
     noise_rms = librosa.feature.rms(y=noise_sample, frame_length=frame_length)[0]
     threshold_db = librosa.amplitude_to_db(np.percentile(noise_rms, 50)) + 2
     
