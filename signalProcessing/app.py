@@ -98,11 +98,16 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
     Returns:
         tuple: (speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes)
     """
+
     # Load audio
     y, sr = sf.read(audio_path)
+
+    logger.info(f'y, sr: {y, sr}')
     
     # Split audio into chunks
     chunk_paths = split_audio_into_chunks(y, sr, chunk_duration)
+
+    logger.info(f'chunk_paths: {chunk_paths}')
     
     chunk_rates = []
     chunk_volumes = []
@@ -114,6 +119,8 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
                 # Analyze chunk using Praat for speech rate
                 objects = run_file(praat_script, -20, 2, 0.3, 0, chunk_path, root_folder, 80, 400, 0.01, capture_output=True)
                 chunk_data = str(objects[1]).strip().split()
+
+                logger.info(f'objects: {objects}')
                 
                 # Get speech rate (syllables per second) - index 2 in the Praat output
                 if len(chunk_data) >= 3:  # Ensure we have enough data
@@ -123,6 +130,7 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
                 # Calculate volume difference for this chunk
                 volume_diff, noise_db = calculate_chunk_volume(chunk_path)  # Get both values
                 chunk_volumes.append(volume_diff)
+                logger.info(f'chunk_volumes: {chunk_volumes}')
                 
             except Exception as e:
                 print(f"Error processing chunk {chunk_path}: {str(e)}")
@@ -138,9 +146,13 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
         speech_rate_fluctuation = max(chunk_rates) - min(chunk_rates)  # Difference between max and min
     else:
         speech_rate_fluctuation = 0.0
+
+    logger.info(f'speech_rate_fluctuation: {speech_rate_fluctuation}')
         
     volume_fluctuation = np.std(chunk_volumes) if chunk_volumes else 0.0
-    
+
+    logger.info(f'volume_fluctuation: {volume_fluctuation}')
+
     # print("\nSummary:")
     # print(f"Number of chunks analyzed: {len(chunk_volumes)}")
     # print(f"Volume fluctuation (std dev): {volume_fluctuation:.2f} dB")
