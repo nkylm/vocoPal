@@ -23,8 +23,8 @@ const PatientSettings = () => {
         const response = await axios.get('http://localhost:8000/api/access/shared-with', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        const pending = response.data.sharedWith.filter(item => item.status === 'pending');
+
+        const pending = response.data.sharedWith.filter((item) => item.status === 'pending');
         setPendingRequests(pending);
       } catch (error) {
         console.error('Error fetching pending requests:', error);
@@ -57,7 +57,7 @@ const PatientSettings = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text type="secondary">
                   Pending requests ({pendingRequests.length}):
-                  {pendingRequests.map(request => (
+                  {pendingRequests.map((request) => (
                     <span key={request.userId._id} style={{ marginLeft: '8px' }}>
                       {request.userId.email}
                     </span>

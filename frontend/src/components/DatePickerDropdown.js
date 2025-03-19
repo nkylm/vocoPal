@@ -8,14 +8,14 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
 
   const handleDateChange = (date) => {
     if (!date) return;
-    
+
     // Convert the ISO date to dayjs and start of day to avoid timezone issues
     const startDate = dayjs(date).startOf('day');
 
     console.log('startDate: ', startDate);
     let endDate;
     let dateString;
-    
+
     switch (granularity) {
       case 'day':
         endDate = startDate.clone().add(1, 'day');
@@ -50,19 +50,24 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
 
     switch (granularity) {
       case 'day':
-        newDate = direction === 'forward' ? currentDate.add(1, 'day') : currentDate.subtract(1, 'day');
+        newDate =
+          direction === 'forward' ? currentDate.add(1, 'day') : currentDate.subtract(1, 'day');
         break;
       case 'week':
-        newDate = direction === 'forward' ? currentDate.add(7, 'days') : currentDate.subtract(7, 'days');
+        newDate =
+          direction === 'forward' ? currentDate.add(7, 'days') : currentDate.subtract(7, 'days');
         break;
       case 'month':
-        newDate = direction === 'forward' ? currentDate.add(1, 'month') : currentDate.subtract(1, 'month');
+        newDate =
+          direction === 'forward' ? currentDate.add(1, 'month') : currentDate.subtract(1, 'month');
         break;
       case 'year':
-        newDate = direction === 'forward' ? currentDate.add(1, 'year') : currentDate.subtract(1, 'year');
+        newDate =
+          direction === 'forward' ? currentDate.add(1, 'year') : currentDate.subtract(1, 'year');
         break;
       default:
-        newDate = direction === 'forward' ? currentDate.add(7, 'days') : currentDate.subtract(7, 'days');
+        newDate =
+          direction === 'forward' ? currentDate.add(7, 'days') : currentDate.subtract(7, 'days');
     }
 
     handleDateChange(newDate);
@@ -71,12 +76,12 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
   // Get the formatted date range for display
   const getDisplayDateRange = () => {
     if (!value) return 'Select date';
-    
+
     console.log('value: ', value);
-    
+
     const startDate = dayjs(value);
     let endDate;
-    
+
     switch (granularity) {
       case 'day':
         return startDate.format('MMM D, YYYY');
@@ -97,18 +102,20 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
       <Space size="large">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <CalendarOutlined 
-            style={{ fontSize: '16px', cursor: 'pointer' }} 
+          <CalendarOutlined
+            style={{ fontSize: '16px', cursor: 'pointer' }}
             onClick={() => setOpen(!open)}
           />
           <span style={{ color: '#666', minWidth: '200px' }}>{getDisplayDateRange()}</span>
-          <div style={{ 
-            display: 'flex', 
-            gap: '4px',
-            background: '#f5f5f5',
-            padding: '4px',
-            borderRadius: '20px'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '4px',
+              background: '#f5f5f5',
+              padding: '4px',
+              borderRadius: '20px'
+            }}
+          >
             <div
               style={{
                 width: '28px',
@@ -128,11 +135,11 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
               }}
               onClick={() => value && handleNavigate('backward')}
             >
-              <LeftOutlined 
-                style={{ 
+              <LeftOutlined
+                style={{
                   fontSize: '12px',
                   color: value ? '#1890ff' : '#d9d9d9'
-                }} 
+                }}
               />
             </div>
             <div
@@ -154,11 +161,11 @@ const DatePickerDropdown = ({ onDateChange, value, granularity, onGranularityCha
               }}
               onClick={() => value && handleNavigate('forward')}
             >
-              <RightOutlined 
-                style={{ 
+              <RightOutlined
+                style={{
                   fontSize: '12px',
                   color: value ? '#1890ff' : '#d9d9d9'
-                }} 
+                }}
               />
             </div>
           </div>

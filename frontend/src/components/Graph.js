@@ -28,7 +28,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   const [displayMode, setDisplayMode] = useState('inRange'); // 'inRange', 'aboveRange', 'belowRange'
   const [metricType, setMetricType] = useState('level'); // 'level', 'fluctuation'
-  
+
   // Get browser's timezone
   const browserTimezone = dayjs.tz.guess();
 
@@ -40,32 +40,22 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
     // Convert selectedDate to browser timezone
     const parsedDate = dayjs(selectedDate).tz(browserTimezone);
     let dates = [];
-    
+
     switch (granularity) {
       case 'day':
-        dates = Array.from({ length: 24 }, (_, i) => 
-          i.toString().padStart(2, '0')
-        );
+        dates = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
         break;
       case 'week':
-        dates = Array.from({ length: 7 }, (_, i) => 
-          parsedDate.add(i, 'day').format('ddd D')
-        );
+        dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('ddd D'));
         break;
       case 'month':
-        dates = Array.from({ length: parsedDate.daysInMonth() }, (_, i) => 
-          (i + 1).toString()
-        );
+        dates = Array.from({ length: parsedDate.daysInMonth() }, (_, i) => (i + 1).toString());
         break;
       case 'year':
-        dates = Array.from({ length: 12 }, (_, i) => 
-          parsedDate.month(i).format('MMM')
-        );
+        dates = Array.from({ length: 12 }, (_, i) => parsedDate.month(i).format('MMM'));
         break;
       default:
-        dates = Array.from({ length: 7 }, (_, i) => 
-          parsedDate.add(i, 'day').format('D')
-        );
+        dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('D'));
     }
     return dates;
   };
@@ -86,33 +76,33 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
     if (speechData.length > 0 && speechData[0].thresholds) {
       const thresholds = speechData[0].thresholds;
       return {
-        volume: { 
-          min: thresholds.volume_min, 
-          max: thresholds.volume_max, 
-          unit: 'dB' 
+        volume: {
+          min: thresholds.volume_min,
+          max: thresholds.volume_max,
+          unit: 'dB'
         },
-        pitch: { 
-          min: thresholds.pitch_min, 
-          max: thresholds.pitch_max, 
-          unit: 'Hz' 
+        pitch: {
+          min: thresholds.pitch_min,
+          max: thresholds.pitch_max,
+          unit: 'Hz'
         },
-        speed: { 
-          min: thresholds.speed_min, 
-          max: thresholds.speed_max, 
-          unit: 'syll/sec' 
+        speed: {
+          min: thresholds.speed_min,
+          max: thresholds.speed_max,
+          unit: 'syll/sec'
         },
-        volume_fluctuation: { 
-          max: thresholds.volume_fluctuation_max, 
-          unit: 'dB/s' 
+        volume_fluctuation: {
+          max: thresholds.volume_fluctuation_max,
+          unit: 'dB/s'
         },
-        pitch_fluctuation: { 
-          min: thresholds.pitch_fluctuation_min, 
-          max: thresholds.pitch_fluctuation_max, 
-          unit: 'Hz/s' 
+        pitch_fluctuation: {
+          min: thresholds.pitch_fluctuation_min,
+          max: thresholds.pitch_fluctuation_max,
+          unit: 'Hz/s'
         },
-        speed_fluctuation: { 
-          max: thresholds.speed_fluctuation_max, 
-          unit: 'syll/sec²' 
+        speed_fluctuation: {
+          max: thresholds.speed_fluctuation_max,
+          unit: 'syll/sec²'
         }
       };
     }
@@ -124,28 +114,28 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
     const getDataForPeriod = () => {
       switch (granularity) {
         case 'day':
-          return speechData.filter(entry => {
+          return speechData.filter((entry) => {
             // Convert entry date to browser timezone and compare hours
             const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
             return entryDate.format('HH') === dateLabel;
           });
         case 'week':
-          return speechData.filter(entry => {
+          return speechData.filter((entry) => {
             const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
             return entryDate.format('ddd D') === dateLabel;
           });
         case 'month':
-          return speechData.filter(entry => {
+          return speechData.filter((entry) => {
             const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
             return entryDate.format('D') === dateLabel;
           });
         case 'year':
-          return speechData.filter(entry => {
+          return speechData.filter((entry) => {
             const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
             return entryDate.format('MMM') === dateLabel;
           });
         default:
-          return speechData.filter(entry => {
+          return speechData.filter((entry) => {
             const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
             return entryDate.format('D') === dateLabel;
           });
@@ -155,8 +145,8 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
     const dataForPeriod = getDataForPeriod();
 
     if (dataForPeriod.length === 0) {
-      return metricType === 'level' 
-        ? { volume: 0, pitch: 0, speed: 0 } 
+      return metricType === 'level'
+        ? { volume: 0, pitch: 0, speed: 0 }
         : { volume_fluctuation: 0, pitch_fluctuation: 0, speed_fluctuation: 0 };
     }
 
@@ -205,8 +195,9 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
         };
 
         if (rangeType === 'inRange') {
-          return notes.includes(stableNote) || 
-                 (metric === 'pitch' && notes.includes(specialNotes.pitch));
+          return (
+            notes.includes(stableNote) || (metric === 'pitch' && notes.includes(specialNotes.pitch))
+          );
         }
         if (rangeType === 'aboveRange') return notes.includes(unstableNote);
         if (rangeType === 'belowRange') return false; // Not applicable for fluctuations
@@ -232,7 +223,7 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   };
 
   const labels = getDateLabels();
-  const percentages = labels.map(label => calculatePercentages(label, displayMode));
+  const percentages = labels.map((label) => calculatePercentages(label, displayMode));
   const thresholds = getTargetThresholds();
 
   // Generate tooltip titles based on metric type
@@ -260,53 +251,54 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
   // Prepare chart data
   const chartData = {
     labels: labels,
-    datasets: metricType === 'level' 
-      ? [
-          {
-            label: 'Volume',
-            data: percentages.map((p) => p.volume),
-            borderColor: '#36A2EB',
-            backgroundColor: '#36A2EB',
-            tension: 0.4
-          },
-          {
-            label: 'Pitch',
-            data: percentages.map((p) => p.pitch),
-            borderColor: '#FF9F40',
-            backgroundColor: '#FF9F40',
-            tension: 0.4
-          },
-          {
-            label: 'Speed',
-            data: percentages.map((p) => p.speed),
-            borderColor: '#4BC0C0',
-            backgroundColor: '#4BC0C0',
-            tension: 0.4
-          }
-        ]
-      : [
-          {
-            label: 'Volume Fluctuation',
-            data: percentages.map((p) => p.volume_fluctuation),
-            borderColor: '#36A2EB',
-            backgroundColor: '#36A2EB',
-            tension: 0.4
-          },
-          {
-            label: 'Pitch Fluctuation',
-            data: percentages.map((p) => p.pitch_fluctuation),
-            borderColor: '#FF9F40',
-            backgroundColor: '#FF9F40',
-            tension: 0.4
-          },
-          {
-            label: 'Speed Fluctuation',
-            data: percentages.map((p) => p.speed_fluctuation),
-            borderColor: '#4BC0C0',
-            backgroundColor: '#4BC0C0',
-            tension: 0.4
-          }
-        ]
+    datasets:
+      metricType === 'level'
+        ? [
+            {
+              label: 'Volume',
+              data: percentages.map((p) => p.volume),
+              borderColor: '#36A2EB',
+              backgroundColor: '#36A2EB',
+              tension: 0.4
+            },
+            {
+              label: 'Pitch',
+              data: percentages.map((p) => p.pitch),
+              borderColor: '#FF9F40',
+              backgroundColor: '#FF9F40',
+              tension: 0.4
+            },
+            {
+              label: 'Speed',
+              data: percentages.map((p) => p.speed),
+              borderColor: '#4BC0C0',
+              backgroundColor: '#4BC0C0',
+              tension: 0.4
+            }
+          ]
+        : [
+            {
+              label: 'Volume Fluctuation',
+              data: percentages.map((p) => p.volume_fluctuation),
+              borderColor: '#36A2EB',
+              backgroundColor: '#36A2EB',
+              tension: 0.4
+            },
+            {
+              label: 'Pitch Fluctuation',
+              data: percentages.map((p) => p.pitch_fluctuation),
+              borderColor: '#FF9F40',
+              backgroundColor: '#FF9F40',
+              tension: 0.4
+            },
+            {
+              label: 'Speed Fluctuation',
+              data: percentages.map((p) => p.speed_fluctuation),
+              borderColor: '#4BC0C0',
+              backgroundColor: '#4BC0C0',
+              tension: 0.4
+            }
+          ]
   };
 
   const titles = {
@@ -342,7 +334,7 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
       >
         <h2>
           <Dropdown
-            menu={{ 
+            menu={{
               items: dropdownItems,
               onClick: (e) => setDisplayMode(e.key)
             }}
@@ -391,20 +383,20 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
             },
             tooltip: {
               callbacks: {
-                title: function(context) {
+                title: function (context) {
                   return context[0].label;
                 },
-                label: function(context) {
+                label: function (context) {
                   let label = context.dataset.label || '';
-                  
+
                   if (label) {
                     const baseMetric = label.split(' ')[0].toLowerCase();
                     label += `: ${context.parsed.y.toFixed(1)}%`;
-                    
+
                     // Add target threshold information
                     label += `\nTarget: ${generateTooltipLabel(baseMetric)}`;
                   }
-                  
+
                   return label;
                 }
               }

@@ -3,11 +3,7 @@ import { Card, List, Spin, Space, Checkbox, Typography, Row, Col, Empty } from '
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
-import {
-  SoundOutlined,
-  RiseOutlined,
-  ThunderboltOutlined
-} from '@ant-design/icons';
+import { SoundOutlined, RiseOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -30,31 +26,31 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
   useEffect(() => {
     const fetchFlags = async () => {
-        setLoading(true);
-        try {
-          const token = localStorage.getItem('token');
-          let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
-  
-          // Only fetch flags if a date is selected
-          if (selectedDate) {
-            const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
-            const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
-            url += `?startDate=${startDate}&endDate=${endDate}`;
-  
-            const response = await axios.get(url, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setFlags(response.data);
-          } else {
-            // If no date is selected, show no flags
-            setFlags([]);
-          }
-        } catch (error) {
-          console.error('Error fetching recordings:', error);
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        let url = `http://localhost:8000/api/speechData/${userId}/recordings`;
+
+        // Only fetch flags if a date is selected
+        if (selectedDate) {
+          const startDate = dayjs(selectedDate, 'MMMM Do, YYYY').format('YYYY-MM-DD');
+          const endDate = dayjs(selectedDate, 'MMMM Do, YYYY').add(7, 'day').format('YYYY-MM-DD');
+          url += `?startDate=${startDate}&endDate=${endDate}`;
+
+          const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setFlags(response.data);
+        } else {
+          // If no date is selected, show no flags
           setFlags([]);
-        } finally {
-          setLoading(false);
         }
+      } catch (error) {
+        console.error('Error fetching recordings:', error);
+        setFlags([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchFlags();
@@ -175,19 +171,19 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
       // Volume badge
       if (notes.includes('loud')) {
-        badges.push({ 
-          type: 'Volume', 
-          value: 'Loud', 
-          icon: <SoundOutlined />, 
+        badges.push({
+          type: 'Volume',
+          value: 'Loud',
+          icon: <SoundOutlined />,
           direction: '↑',
           bgColor: '#e6f4ff',
           iconColor: '#1890ff'
         });
       } else if (notes.includes('quiet')) {
-        badges.push({ 
-          type: 'Volume', 
-          value: 'Quiet', 
-          icon: <SoundOutlined />, 
+        badges.push({
+          type: 'Volume',
+          value: 'Quiet',
+          icon: <SoundOutlined />,
           direction: '↓',
           bgColor: '#e6f4ff',
           iconColor: '#1890ff'
@@ -196,37 +192,37 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
       // Pitch badge
       if (notes.includes('high-pitch')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'High', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'High',
+          icon: <RiseOutlined />,
           direction: '↑',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('low-pitch')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Low', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Low',
+          icon: <RiseOutlined />,
           direction: '↓',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('volatile')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Volatile', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Volatile',
+          icon: <RiseOutlined />,
           direction: '↑',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('monotone')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Monotone', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Monotone',
+          icon: <RiseOutlined />,
           direction: '↓',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
@@ -235,19 +231,19 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
       // Speed badge
       if (notes.includes('fast')) {
-        badges.push({ 
-          type: 'Speed', 
-          value: 'Fast', 
-          icon: <ThunderboltOutlined />, 
+        badges.push({
+          type: 'Speed',
+          value: 'Fast',
+          icon: <ThunderboltOutlined />,
           direction: '↑',
           bgColor: '#f9f0ff',
           iconColor: '#722ed1'
         });
       } else if (notes.includes('slow')) {
-        badges.push({ 
-          type: 'Speed', 
-          value: 'Slow', 
-          icon: <ThunderboltOutlined />, 
+        badges.push({
+          type: 'Speed',
+          value: 'Slow',
+          icon: <ThunderboltOutlined />,
           direction: '↓',
           bgColor: '#f9f0ff',
           iconColor: '#722ed1'
@@ -260,14 +256,14 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
     const badges = getMetricBadges();
 
     return (
-      <Card 
-        style={{ 
+      <Card
+        style={{
           width: '100%',
           marginBottom: '16px',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: '1px solid #f0f0f0',
-          minHeight: '140px', // Minimum height, will expand as needed
+          minHeight: '140px' // Minimum height, will expand as needed
         }}
         bodyStyle={{
           padding: '16px',
@@ -279,36 +275,45 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
           {badges.map((badge, index) => (
-            <div key={index} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              marginBottom: '4px'
-            }}>
-              <div style={{
-                display: 'inline-flex',
+            <div
+              key={index}
+              style={{
+                display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                backgroundColor: badge.bgColor,
-              }}>
+                marginBottom: '4px'
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: badge.bgColor
+                }}
+              >
                 {React.cloneElement(badge.icon, {
-                  style: { 
+                  style: {
                     fontSize: '16px',
                     color: badge.iconColor
                   }
                 })}
                 <Text strong>{badge.type}</Text>
               </div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                backgroundColor: '#f5f5f5',
-              }}>
-                <Text>{badge.value} {badge.direction}</Text>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f5f5f5'
+                }}
+              >
+                <Text>
+                  {badge.value} {badge.direction}
+                </Text>
               </div>
             </div>
           ))}
@@ -340,13 +345,13 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
       {selectedDate ? (
         <List
           grid={{
-            gutter: 32, 
+            gutter: 32,
             xs: 1,
             sm: 2,
             md: 2,
             lg: 4,
             xl: 4,
-            xxl: 4,
+            xxl: 4
           }}
           dataSource={filteredFlags}
           renderItem={renderFlagCard}

@@ -3,11 +3,7 @@ import { Card, List, Spin, Space, Checkbox, Typography, Row, Col, Empty } from '
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
-import {
-  SoundOutlined,
-  RiseOutlined,
-  ThunderboltOutlined
-} from '@ant-design/icons';
+import { SoundOutlined, RiseOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -68,14 +64,9 @@ const RecordingsList = ({ userId, selectedDate }) => {
 
         // Check if any of the enabled filters match the recording's notes
         const matchesSpeechMetric =
-          (filters.volumeLevel &&
-            (notes.includes('loud') ||
-              notes.includes('quiet'))) ||
-          (filters.pitchLevel &&
-            (notes.includes('high-pitch') ||
-              notes.includes('low-pitch'))) ||
-          (filters.speedLevel &&
-            (notes.includes('fast') || notes.includes('slow'))) ||
+          (filters.volumeLevel && (notes.includes('loud') || notes.includes('quiet'))) ||
+          (filters.pitchLevel && (notes.includes('high-pitch') || notes.includes('low-pitch'))) ||
+          (filters.speedLevel && (notes.includes('fast') || notes.includes('slow'))) ||
           (filters.volumeFluctuation && notes.includes('unstable-volume')) ||
           (filters.pitchFluctuation &&
             (notes.includes('volatile') || notes.includes('monotone'))) ||
@@ -175,19 +166,19 @@ const RecordingsList = ({ userId, selectedDate }) => {
 
       // Volume badge
       if (notes.includes('loud')) {
-        badges.push({ 
-          type: 'Volume', 
-          value: 'Loud', 
-          icon: <SoundOutlined />, 
+        badges.push({
+          type: 'Volume',
+          value: 'Loud',
+          icon: <SoundOutlined />,
           direction: '↑',
           bgColor: '#e6f4ff',
           iconColor: '#1890ff'
         });
       } else if (notes.includes('quiet')) {
-        badges.push({ 
-          type: 'Volume', 
-          value: 'Quiet', 
-          icon: <SoundOutlined />, 
+        badges.push({
+          type: 'Volume',
+          value: 'Quiet',
+          icon: <SoundOutlined />,
           direction: '↓',
           bgColor: '#e6f4ff',
           iconColor: '#1890ff'
@@ -196,37 +187,37 @@ const RecordingsList = ({ userId, selectedDate }) => {
 
       // Pitch badge
       if (notes.includes('high-pitch')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'High', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'High',
+          icon: <RiseOutlined />,
           direction: '↑',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('low-pitch')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Low', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Low',
+          icon: <RiseOutlined />,
           direction: '↓',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('volatile')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Volatile', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Volatile',
+          icon: <RiseOutlined />,
           direction: '↑',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
         });
       } else if (notes.includes('monotone')) {
-        badges.push({ 
-          type: 'Pitch', 
-          value: 'Monotone', 
-          icon: <RiseOutlined />, 
+        badges.push({
+          type: 'Pitch',
+          value: 'Monotone',
+          icon: <RiseOutlined />,
           direction: '↓',
           bgColor: '#fff7e6',
           iconColor: '#faad14'
@@ -235,19 +226,19 @@ const RecordingsList = ({ userId, selectedDate }) => {
 
       // Speed badge
       if (notes.includes('fast')) {
-        badges.push({ 
-          type: 'Speed', 
-          value: 'Fast', 
-          icon: <ThunderboltOutlined />, 
+        badges.push({
+          type: 'Speed',
+          value: 'Fast',
+          icon: <ThunderboltOutlined />,
           direction: '↑',
           bgColor: '#f9f0ff',
           iconColor: '#722ed1'
         });
       } else if (notes.includes('slow')) {
-        badges.push({ 
-          type: 'Speed', 
-          value: 'Slow', 
-          icon: <ThunderboltOutlined />, 
+        badges.push({
+          type: 'Speed',
+          value: 'Slow',
+          icon: <ThunderboltOutlined />,
           direction: '↓',
           bgColor: '#f9f0ff',
           iconColor: '#722ed1'
@@ -260,14 +251,14 @@ const RecordingsList = ({ userId, selectedDate }) => {
     const badges = getMetricBadges();
 
     return (
-      <Card 
-        style={{ 
+      <Card
+        style={{
           width: '100%',
           marginBottom: '16px',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: '1px solid #f0f0f0',
-          minHeight: '200px', // Minimum height, will expand as needed
+          minHeight: '200px' // Minimum height, will expand as needed
         }}
         bodyStyle={{
           padding: '16px',
@@ -279,44 +270,53 @@ const RecordingsList = ({ userId, selectedDate }) => {
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
           {badges.map((badge, index) => (
-            <div key={index} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              marginBottom: '4px'
-            }}>
-              <div style={{
-                display: 'inline-flex',
+            <div
+              key={index}
+              style={{
+                display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                backgroundColor: badge.bgColor,
-              }}>
+                marginBottom: '4px'
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: badge.bgColor
+                }}
+              >
                 {React.cloneElement(badge.icon, {
-                  style: { 
+                  style: {
                     fontSize: '16px',
                     color: badge.iconColor
                   }
                 })}
                 <Text strong>{badge.type}</Text>
               </div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                backgroundColor: '#f5f5f5',
-              }}>
-                <Text>{badge.value} {badge.direction}</Text>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f5f5f5'
+                }}
+              >
+                <Text>
+                  {badge.value} {badge.direction}
+                </Text>
               </div>
             </div>
           ))}
         </div>
         <div style={{ marginTop: 'auto' }}>
           <p>{dayjs(recording.date_recorded).format('MMM D, h:mm A')}</p>
-          <audio 
-            controls 
+          <audio
+            controls
             style={{ width: '100%', marginTop: '4px' }}
             key={recording.recording_url}
             src={recording.recording_url}
@@ -348,13 +348,13 @@ const RecordingsList = ({ userId, selectedDate }) => {
       {selectedDate ? (
         <List
           grid={{
-            gutter: 32, 
+            gutter: 32,
             xs: 1,
             sm: 2,
             md: 2,
             lg: 4,
             xl: 4,
-            xxl: 4,
+            xxl: 4
           }}
           dataSource={filteredRecordings}
           renderItem={renderRecordingCard}

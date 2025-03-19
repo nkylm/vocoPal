@@ -173,9 +173,7 @@ const PatientDashboard = () => {
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               const volumeFluctuation = data.metrics.volume_fluctuation || 0;
-              return volumeFluctuation <= data.thresholds.volume_fluctuation_max
-                ? acc + 1
-                : acc;
+              return volumeFluctuation <= data.thresholds.volume_fluctuation_max ? acc + 1 : acc;
             }, 0)
           : 0;
 
@@ -194,9 +192,7 @@ const PatientDashboard = () => {
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               const speedFluctuation = data.metrics.speed_fluctuation || 0;
-              return speedFluctuation <= data.thresholds.speed_fluctuation_max
-                ? acc + 1
-                : acc;
+              return speedFluctuation <= data.thresholds.speed_fluctuation_max ? acc + 1 : acc;
             }, 0)
           : 0;
 
@@ -293,11 +289,11 @@ const PatientDashboard = () => {
       // Reuse the date that was already selected but with new granularity
       handleDateChange(selectedDate, null, null);
     }
-    
+
     // Update comparison period label based on granularity
     updateComparisonPeriodLabel();
   }, [granularity]); // Add granularity to dependency array
-  
+
   // Function to update comparison period label
   const updateComparisonPeriodLabel = () => {
     switch (granularity) {
@@ -345,13 +341,19 @@ const PatientDashboard = () => {
       case 'month':
         formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('month').format('YYYY-MM-DD');
-        previousPeriodStartDate = startDate.subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate
+          .subtract(1, 'month')
+          .startOf('month')
+          .format('YYYY-MM-DD');
         previousPeriodEndDate = startDate.subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
         break;
       case 'year':
         formattedStartDate = startDate.startOf('year').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('year').format('YYYY-MM-DD');
-        previousPeriodStartDate = startDate.subtract(1, 'year').startOf('year').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate
+          .subtract(1, 'year')
+          .startOf('year')
+          .format('YYYY-MM-DD');
         previousPeriodEndDate = startDate.subtract(1, 'year').endOf('year').format('YYYY-MM-DD');
         break;
       default:
@@ -367,7 +369,7 @@ const PatientDashboard = () => {
     try {
       const response = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { 
+        params: {
           startDate: formattedStartDate,
           endDate: formattedEndDate
         }
@@ -380,19 +382,22 @@ const PatientDashboard = () => {
 
     // Fetch previous period's data for comparison
     try {
-      const previousPeriodResponse = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { 
-          startDate: previousPeriodStartDate,
-          endDate: previousPeriodEndDate
+      const previousPeriodResponse = await axios.get(
+        `http://localhost:8000/api/speechData/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            startDate: previousPeriodStartDate,
+            endDate: previousPeriodEndDate
+          }
         }
-      });
+      );
       setPreviousPeriodSpeechData(previousPeriodResponse.data);
     } catch (error) {
       console.error('Error fetching previous period data:', error);
       setPreviousPeriodSpeechData([]); // Set empty data on error
     }
-    
+
     // Update comparison period label
     updateComparisonPeriodLabel();
   };
@@ -451,7 +456,8 @@ const PatientDashboard = () => {
               <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor:
+                    data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -512,7 +518,7 @@ const PatientDashboard = () => {
       </Card>
     );
   };
-  
+
   // New function to render fluctuation metric cards
   const renderFluctuationMetricCard = (title, icon, data, range) => {
     const getTitleBoxColor = (title) => {
@@ -568,7 +574,8 @@ const PatientDashboard = () => {
               <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor:
+                    data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -636,8 +643,7 @@ const PatientDashboard = () => {
                   gap: '4px',
                   visibility: 'hidden' // Hide this div if not pitch to maintain layout
                 }}
-              >
-              </div>
+              ></div>
             )}
           </div>
         </div>
@@ -652,7 +658,7 @@ const PatientDashboard = () => {
         <TopNavBar />
         <div className="content p-6">
           <div className="mb-6">
-            <DatePickerDropdown 
+            <DatePickerDropdown
               onDateChange={handleDateChange}
               value={selectedDate}
               granularity={granularity}
@@ -668,7 +674,11 @@ const PatientDashboard = () => {
                 children: (
                   <Card>
                     {thresholds ? (
-                      <Graph speechData={speechData} selectedDate={selectedDate} granularity={granularity} />
+                      <Graph
+                        speechData={speechData}
+                        selectedDate={selectedDate}
+                        granularity={granularity}
+                      />
                     ) : (
                       <p>Loading thresholds...</p>
                     )}
@@ -708,7 +718,9 @@ const PatientDashboard = () => {
                       </Col>
                     </Row>
 
-                    <Title level={4} className="mt-6">Fluctuation</Title>
+                    <Title level={4} className="mt-6">
+                      Fluctuation
+                    </Title>
                     <Row gutter={[16, 16]} style={{ marginBottom: '60px' }}>
                       <Col xs={24} md={8}>
                         {renderFluctuationMetricCard(
@@ -745,8 +757,16 @@ const PatientDashboard = () => {
                   <RecordingsList
                     userId={userId}
                     selectedDate={selectedDate}
-                    startDate={selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null}
-                    endDate={selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null}
+                    startDate={
+                      selectedDate
+                        ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD')
+                        : null
+                    }
+                    endDate={
+                      selectedDate
+                        ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD')
+                        : null
+                    }
                   />
                 )
               }
