@@ -274,7 +274,7 @@ def analyze_audio_file():
         else:
             logger.info(f"File found: {output_path}, attempting to load...")
 
-        y, sr = librosa.load(output_path, sr=None)
+        y, sr = sf.read(output_path)
         logger.info(f"Audio loaded successfully: {y.shape}, {sr}")
 
     except Exception as e:
