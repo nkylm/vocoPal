@@ -21,10 +21,10 @@ const TherapistSettings = () => {
       });
 
       const allAccess = response.data.hasAccessTo || [];
-      
+
       // Separate pending requests and accepted patients
-      const pending = allAccess.filter(p => p.status === 'pending');
-      const accepted = allAccess.filter(p => p.status === 'accepted');
+      const pending = allAccess.filter((p) => p.status === 'pending');
+      const accepted = allAccess.filter((p) => p.status === 'accepted');
 
       setPendingRequests(pending);
       setPatients(accepted);
@@ -38,7 +38,7 @@ const TherapistSettings = () => {
       console.error('Error fetching patients:', error);
     }
   };
-  
+
   // Fetch list of patients the therapist has access to
   useEffect(() => {
     fetchPatients();
@@ -46,7 +46,7 @@ const TherapistSettings = () => {
 
   const handlePatientChange = (patientId) => {
     setSelectedPatient(patientId);
-    
+
     // Update access level for the selected patient
     const selectedPatientData = patients.find((p) => p.userId._id === patientId);
     if (selectedPatientData) {
@@ -82,7 +82,7 @@ const TherapistSettings = () => {
         <TherapistTopNavBar />
         <div className="content p-6">
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
-          
+
           {selectedPatient ? (
             <>
               <h2 className="text-xl font-semibold mb-4">Target Range Tolerance</h2>

@@ -5,9 +5,15 @@ import vocalpalLogo from '../util/vocopalLogo.svg';
 const { Sider } = Layout;
 const { Title } = Typography;
 
-const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatientSelect, onRespondToRequest }) => {
-  const acceptedPatients = patients?.filter(p => p.status === 'accepted');
-  
+const TherapistSideBar = ({
+  patients,
+  pendingRequests,
+  selectedPatient,
+  onPatientSelect,
+  onRespondToRequest
+}) => {
+  const acceptedPatients = patients?.filter((p) => p.status === 'accepted');
+
   return (
     <Sider
       width={240}
@@ -24,7 +30,7 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
         <div style={{ marginBottom: '24px' }}>
           <img src={vocalpalLogo} alt="VocoPal" style={{ height: '32px' }} />
         </div>
-        
+
         {/* Requests Section */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -35,7 +41,7 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
               <Badge count={pendingRequests?.length} style={{ marginLeft: '8px' }} />
             )}
           </div>
-          {pendingRequests?.map(request => (
+          {pendingRequests?.map((request) => (
             <div
               key={request.userId._id}
               style={{
@@ -81,11 +87,9 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
             PATIENTS
           </Title>
           {acceptedPatients?.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#666' }}>
-              No patients yet
-            </div>
+            <div style={{ textAlign: 'center', color: '#666' }}>No patients yet</div>
           ) : (
-            acceptedPatients?.map(patient => (
+            acceptedPatients?.map((patient) => (
               <div
                 key={patient.userId._id}
                 onClick={() => onPatientSelect(patient.userId._id)}
@@ -95,7 +99,8 @@ const TherapistSideBar = ({ patients, pendingRequests, selectedPatient, onPatien
                   padding: '12px 8px',
                   cursor: 'pointer',
                   borderRadius: '8px',
-                  backgroundColor: selectedPatient === patient.userId._id ? '#f0f0f0' : 'transparent',
+                  backgroundColor:
+                    selectedPatient === patient.userId._id ? '#f0f0f0' : 'transparent',
                   marginBottom: '4px'
                 }}
               >

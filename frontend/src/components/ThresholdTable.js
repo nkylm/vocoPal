@@ -144,51 +144,50 @@ const ThresholdTable = ({ patientId, readOnly }) => {
       setFetchingData(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(
-          `http://localhost:8000/api/thresholds/${patientId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
+        const response = await axios.get(`http://localhost:8000/api/thresholds/${patientId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
         const thresholds = response.data;
 
-        console.log('thresholds: ', thresholds)
-        
+        console.log('thresholds: ', thresholds);
+
         // Determine level types based on min/max values
         const volumeLevelType = determineLevelType(
-          thresholds[0].volume_min, 
-          thresholds[0].volume_max, 
+          thresholds[0].volume_min,
+          thresholds[0].volume_max,
           'Volume'
         );
-        
+
         const pitchLevelType = determineLevelType(
-          thresholds[0].pitch_min, 
-          thresholds[0].pitch_max, 
+          thresholds[0].pitch_min,
+          thresholds[0].pitch_max,
           'Pitch'
         );
-        
+
         const speedLevelType = determineLevelType(
-          thresholds[0].speed_min, 
-          thresholds[0].speed_max, 
+          thresholds[0].speed_min,
+          thresholds[0].speed_max,
           'Speed'
         );
-        
+
         // Determine fluctuation types
         const volumeFluctuationType = determineFluctuationType(
-          thresholds[0].volume_fluctuation_max, 
+          thresholds[0].volume_fluctuation_max,
           'Volume'
         );
-        
+
         // For pitch, we'll use the max value to determine type
         const pitchFluctuationType = determineFluctuationType(
-          thresholds[0].pitch_fluctuation_max, 
+          thresholds[0].pitch_fluctuation_max,
           'Pitch'
         );
-        
+
         const speedFluctuationType = determineFluctuationType(
-          thresholds[0].speed_fluctuation_max, 
+          thresholds[0].speed_fluctuation_max,
           'Speed'
         );
-        
+
         // Update the data state with fetched values
         setData([
           {
@@ -230,15 +229,15 @@ const ThresholdTable = ({ patientId, readOnly }) => {
       }
 
       // Get the metric data
-      const volumeData = data.find(item => item.metric === 'Volume');
-      const pitchData = data.find(item => item.metric === 'Pitch');
-      const speedData = data.find(item => item.metric === 'Speed');
-      
+      const volumeData = data.find((item) => item.metric === 'Volume');
+      const pitchData = data.find((item) => item.metric === 'Pitch');
+      const speedData = data.find((item) => item.metric === 'Speed');
+
       // Prepare the payload based on selected ranges
       const volumeRange = parseRange(metricRanges.Volume.levelOptions[volumeData.levelType]);
       const pitchRange = parseRange(metricRanges.Pitch.levelOptions[pitchData.levelType]);
       const speedRange = parseRange(metricRanges.Speed.levelOptions[speedData.levelType]);
-      
+
       // Get the separate fluctuation thresholds
       const volumeFluctuation = volumeFluctuationLimits[volumeData.fluctuationType];
       const pitchFluctuation = pitchFluctuationRanges[pitchData.fluctuationType];
@@ -252,12 +251,12 @@ const ThresholdTable = ({ patientId, readOnly }) => {
         pitch_max: pitchRange.max,
         speed_min: speedRange.min,
         speed_max: speedRange.max,
-        
+
         // Separate fluctuation thresholds
         volume_fluctuation_max: volumeFluctuation,
         pitch_fluctuation_min: pitchFluctuation.min,
         pitch_fluctuation_max: pitchFluctuation.max,
-        speed_fluctuation_max: speedFluctuationMax,
+        speed_fluctuation_max: speedFluctuationMax
       };
 
       console.log('payload: ', payload);
@@ -339,11 +338,12 @@ const ThresholdTable = ({ patientId, readOnly }) => {
           </Select>
           <span style={{ marginLeft: 8, color: '#666' }}>
             {metricRanges[record.metric].fluctuationOptions[record.fluctuationType]}
-            {record.metric === 'Volume' && 
+            {record.metric === 'Volume' &&
               ` (Max: ${volumeFluctuationLimits[record.fluctuationType]} db)`}
-            {record.metric === 'Pitch' && pitchFluctuationRanges[record.fluctuationType] && 
+            {record.metric === 'Pitch' &&
+              pitchFluctuationRanges[record.fluctuationType] &&
               ` (${pitchFluctuationRanges[record.fluctuationType].min}-${pitchFluctuationRanges[record.fluctuationType].max} Hz)`}
-            {record.metric === 'Speed' && 
+            {record.metric === 'Speed' &&
               ` (Max: ${speedFluctuationLimits[record.fluctuationType]} syll/sec)`}
           </span>
         </div>

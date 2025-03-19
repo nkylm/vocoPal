@@ -24,7 +24,7 @@ const TherapistDashboard = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patients, setPatients] = useState([]);
   const [speechData, setSpeechData] = useState([]);
-  const [lastWeekSpeechData, setLastWeekSpeechData] = useState([]);
+  const [previousPeriodSpeechData, setPreviousPeriodSpeechData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
   const [hasRecordingsAccess, setHasRecordingsAccess] = useState(false);
@@ -38,6 +38,7 @@ const TherapistDashboard = () => {
   });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [granularity, setGranularity] = useState('week');
+  const [comparisonPeriodLabel, setComparisonPeriodLabel] = useState('Last week');
 
   const token = localStorage.getItem('token');
 
@@ -48,10 +49,10 @@ const TherapistDashboard = () => {
       });
 
       const allAccess = response.data.hasAccessTo || [];
-      
+
       // Separate pending requests and accepted patients
-      const pending = allAccess.filter(p => p.status === 'pending');
-      const accepted = allAccess.filter(p => p.status === 'accepted');
+      const pending = allAccess.filter((p) => p.status === 'pending');
+      const accepted = allAccess.filter((p) => p.status === 'accepted');
 
       setPendingRequests(pending);
       setPatients(accepted);
@@ -65,7 +66,7 @@ const TherapistDashboard = () => {
       console.error('Error fetching patients:', error);
     }
   };
-  
+
   // Fetch list of patients the therapist has access to
   useEffect(() => {
     fetchPatients();
@@ -80,8 +81,8 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const volume = data.metrics.volume;
-                if (volume > thresholds.volume_max) acc.above++;
-                else if (volume < thresholds.volume_min) acc.below++;
+                if (volume > data.thresholds.volume_max) acc.above++;
+                else if (volume < data.thresholds.volume_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -94,8 +95,8 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const pitch = data.metrics.pitch;
-                if (pitch > thresholds.pitch_max) acc.above++;
-                else if (pitch < thresholds.pitch_min) acc.below++;
+                if (pitch > data.thresholds.pitch_max) acc.above++;
+                else if (pitch < data.thresholds.pitch_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -108,8 +109,8 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const speed = data.metrics.speed;
-                if (speed > thresholds.speed_max) acc.above++;
-                else if (speed < thresholds.speed_min) acc.below++;
+                if (speed > data.thresholds.speed_max) acc.above++;
+                else if (speed < data.thresholds.speed_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -123,7 +124,7 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const volumeFluctuation = data.metrics.volume_fluctuation || 0;
-                if (volumeFluctuation > thresholds.volume_fluctuation_max) acc.unstable++;
+                if (volumeFluctuation > data.thresholds.volume_fluctuation_max) acc.unstable++;
                 else acc.inRange++;
                 return acc;
               },
@@ -136,8 +137,8 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
-                if (pitchFluctuation > thresholds.pitch_fluctuation_max) acc.unstable++;
-                else if (pitchFluctuation < thresholds.pitch_fluctuation_min) acc.monotone++;
+                if (pitchFluctuation > data.thresholds.pitch_fluctuation_max) acc.unstable++;
+                else if (pitchFluctuation < data.thresholds.pitch_fluctuation_min) acc.monotone++;
                 else acc.inRange++;
                 return acc;
               },
@@ -150,7 +151,7 @@ const TherapistDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const speedFluctuation = data.metrics.speed_fluctuation || 0;
-                if (speedFluctuation > thresholds.speed_fluctuation_max) acc.unstable++;
+                if (speedFluctuation > data.thresholds.speed_fluctuation_max) acc.unstable++;
                 else acc.inRange++;
                 return acc;
               },
@@ -160,8 +161,8 @@ const TherapistDashboard = () => {
 
       // Calculate last week's in-range percentages
       const lastWeekVolumeInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.volume >= data.thresholds.volume_min &&
                 data.metrics.volume <= data.thresholds.volume_max
                 ? acc + 1
@@ -170,8 +171,8 @@ const TherapistDashboard = () => {
           : 0;
 
       const lastWeekPitchInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.pitch >= data.thresholds.pitch_min &&
                 data.metrics.pitch <= data.thresholds.pitch_max
                 ? acc + 1
@@ -180,8 +181,8 @@ const TherapistDashboard = () => {
           : 0;
 
       const lastWeekSpeedInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.speed >= data.thresholds.speed_min &&
                 data.metrics.speed <= data.thresholds.speed_max
                 ? acc + 1
@@ -191,18 +192,16 @@ const TherapistDashboard = () => {
 
       // Calculate last week's fluctuation in-range percentages
       const lastWeekVolumeFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const volumeFluctuation = data.metrics.volume_fluctuation || 0;
-              return volumeFluctuation <= data.thresholds.volume_fluctuation_max
-                ? acc + 1
-                : acc;
+              return volumeFluctuation <= data.thresholds.volume_fluctuation_max ? acc + 1 : acc;
             }, 0)
           : 0;
 
       const lastWeekPitchFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
               return pitchFluctuation >= data.thresholds.pitch_fluctuation_min &&
                 pitchFluctuation <= data.thresholds.pitch_fluctuation_max
@@ -212,17 +211,15 @@ const TherapistDashboard = () => {
           : 0;
 
       const lastWeekSpeedFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const speedFluctuation = data.metrics.speed_fluctuation || 0;
-              return speedFluctuation <= data.thresholds.speed_fluctuation_max
-                ? acc + 1
-                : acc;
+              return speedFluctuation <= data.thresholds.speed_fluctuation_max ? acc + 1 : acc;
             }, 0)
           : 0;
 
       const total = speechData.length;
-      const lastWeekTotal = lastWeekSpeechData.length;
+      const lastWeekTotal = previousPeriodSpeechData.length;
 
       setAnalytics({
         volume: {
@@ -273,7 +270,7 @@ const TherapistDashboard = () => {
         }
       });
     }
-  }, [speechData, lastWeekSpeechData, thresholds]);
+  }, [speechData, previousPeriodSpeechData, thresholds]);
 
   // Fetch patient's thresholds
   useEffect(() => {
@@ -316,7 +313,30 @@ const TherapistDashboard = () => {
     if (selectedDate) {
       handleDateChange(selectedDate, null, null);
     }
+
+    // Update comparison period label based on granularity
+    updateComparisonPeriodLabel();
   }, [granularity]);
+
+  // Function to update comparison period label
+  const updateComparisonPeriodLabel = () => {
+    switch (granularity) {
+      case 'day':
+        setComparisonPeriodLabel('Previous day');
+        break;
+      case 'week':
+        setComparisonPeriodLabel('Previous week');
+        break;
+      case 'month':
+        setComparisonPeriodLabel('Previous month');
+        break;
+      case 'year':
+        setComparisonPeriodLabel('Previous year');
+        break;
+      default:
+        setComparisonPeriodLabel('Previous period');
+    }
+  };
 
   // Update handleDateChange to match PatientDashboard
   const handleDateChange = async (date, dateString, endDate) => {
@@ -325,28 +345,46 @@ const TherapistDashboard = () => {
     const startDate = dayjs(date).startOf('day');
     let formattedStartDate;
     let formattedEndDate;
+    let previousPeriodStartDate;
+    let previousPeriodEndDate;
 
     // Calculate start and end dates based on granularity
     switch (granularity) {
       case 'day':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(1, 'day').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(1, 'day').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.endOf('day').format('YYYY-MM-DD');
         break;
       case 'week':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
         break;
       case 'month':
         formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('month').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate
+          .subtract(1, 'month')
+          .startOf('month')
+          .format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
         break;
       case 'year':
         formattedStartDate = startDate.startOf('year').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('year').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate
+          .subtract(1, 'year')
+          .startOf('year')
+          .format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'year').endOf('year').format('YYYY-MM-DD');
         break;
       default:
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
     }
 
     // Always update the selected date first
@@ -355,7 +393,7 @@ const TherapistDashboard = () => {
     try {
       const response = await axios.get(`http://localhost:8000/api/speechData/${selectedPatient}`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { 
+        params: {
           startDate: formattedStartDate,
           endDate: formattedEndDate
         }
@@ -366,29 +404,32 @@ const TherapistDashboard = () => {
       setSpeechData([]); // Set empty data on error
     }
 
-    // Fetch last week's data for comparison
+    // Fetch previous period's data for comparison
     try {
-      const lastWeekStartDate = startDate.clone().subtract(7, 'days').format('YYYY-MM-DD');
-      const lastWeekEndDate = startDate.format('YYYY-MM-DD');
-      
-      const lastWeekResponse = await axios.get(`http://localhost:8000/api/speechData/${selectedPatient}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { 
-          startDate: lastWeekStartDate,
-          endDate: lastWeekEndDate
+      const previousPeriodResponse = await axios.get(
+        `http://localhost:8000/api/speechData/${selectedPatient}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            startDate: previousPeriodStartDate,
+            endDate: previousPeriodEndDate
+          }
         }
-      });
-      setLastWeekSpeechData(lastWeekResponse.data);
+      );
+      setPreviousPeriodSpeechData(previousPeriodResponse.data);
     } catch (error) {
-      console.error('Error fetching last week data:', error);
-      setLastWeekSpeechData([]); // Set empty data on error
+      console.error('Error fetching previous period data:', error);
+      setPreviousPeriodSpeechData([]); // Set empty data on error
     }
+
+    // Update comparison period label
+    updateComparisonPeriodLabel();
   };
 
   const handlePatientChange = (patientId) => {
     setSelectedPatient(patientId);
     setSpeechData([]); // Clear previous patient's data
-    setLastWeekSpeechData([]); // Clear previous patient's last week data
+    setPreviousPeriodSpeechData([]); // Clear previous patient's last week data
     setSelectedDate(null);
 
     // Update recordings access status for the selected patient
@@ -466,7 +507,7 @@ const TherapistDashboard = () => {
               {range}
             </Text>
             <div style={{ marginTop: 'auto', textAlign: 'center' }}>
-              <Text type="secondary">Last week: </Text>
+              <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
                   backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
@@ -653,8 +694,7 @@ const TherapistDashboard = () => {
                   gap: '4px',
                   visibility: 'hidden'
                 }}
-              >
-              </div>
+              ></div>
             )}
           </div>
         </div>
@@ -670,10 +710,10 @@ const TherapistDashboard = () => {
         children: (
           <Card>
             {thresholds ? (
-              <Graph 
-                speechData={speechData} 
-                selectedDate={selectedDate} 
-                granularity={granularity} 
+              <Graph
+                speechData={speechData}
+                selectedDate={selectedDate}
+                granularity={granularity}
               />
             ) : (
               <p>Loading thresholds...</p>
@@ -714,8 +754,10 @@ const TherapistDashboard = () => {
               </Col>
             </Row>
 
-            <Title level={4} className="mt-6">Fluctuation</Title>
-            <Row gutter={[16, 16]}>
+            <Title level={4} className="mt-6">
+              Fluctuation
+            </Title>
+            <Row gutter={[16, 16]} style={{ marginBottom: '60px' }}>
               <Col xs={24} md={8}>
                 {renderFluctuationMetricCard(
                   'Volume',
@@ -754,8 +796,12 @@ const TherapistDashboard = () => {
             <RecordingsList
               userId={selectedPatient}
               selectedDate={selectedDate}
-              startDate={selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null}
-              endDate={selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null}
+              startDate={
+                selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null
+              }
+              endDate={
+                selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null
+              }
             />
           )
         }
@@ -766,8 +812,12 @@ const TherapistDashboard = () => {
             <FlagsList
               userId={selectedPatient}
               selectedDate={selectedDate}
-              startDate={selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null}
-              endDate={selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null}
+              startDate={
+                selectedDate ? dayjs(selectedDate).startOf(granularity).format('YYYY-MM-DD') : null
+              }
+              endDate={
+                selectedDate ? dayjs(selectedDate).endOf(granularity).format('YYYY-MM-DD') : null
+              }
             />
           )
         };
@@ -805,7 +855,7 @@ const TherapistDashboard = () => {
           {selectedPatient && (
             <>
               <div className="mb-6">
-                <DatePickerDropdown 
+                <DatePickerDropdown
                   onDateChange={handleDateChange}
                   value={selectedDate}
                   granularity={granularity}

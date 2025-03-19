@@ -21,7 +21,7 @@ const PermissionsTable = () => {
 
       // Transform the data and filter out pending requests
       const transformedData = response.data.sharedWith
-        .filter(item => item.status === 'accepted') // Only show accepted permissions
+        .filter((item) => item.status === 'accepted') // Only show accepted permissions
         .map((item, index) => ({
           key: item.userId._id,
           name: item.userId.name,
