@@ -84,7 +84,7 @@ def calculate_chunk_volume(chunk_path, frame_length=2048):
     Returns:
         tuple: (volume_difference, noise_db)
     """
-    y, sr = librosa.load(chunk_path, sr=None)
+    y, sr = sf.read(chunk_path)
     return calculate_relative_volume(y, sr, frame_length)
 
 def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
@@ -99,7 +99,7 @@ def calculate_speech_rate_fluctuation(audio_path, chunk_duration=5.0):
         tuple: (speech_rate_fluctuation, volume_fluctuation, chunk_rates, chunk_volumes)
     """
     # Load audio
-    y, sr = librosa.load(audio_path, sr=None)
+    y, sr = sf.read(audio_path)
     
     # Split audio into chunks
     chunk_paths = split_audio_into_chunks(y, sr, chunk_duration)
