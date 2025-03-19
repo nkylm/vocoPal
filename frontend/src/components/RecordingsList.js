@@ -70,18 +70,16 @@ const RecordingsList = ({ userId, selectedDate }) => {
         const matchesSpeechMetric =
           (filters.volumeLevel &&
             (notes.includes('loud') ||
-              notes.includes('quiet') ||
-              notes.includes('normal-volume'))) ||
+              notes.includes('quiet'))) ||
           (filters.pitchLevel &&
             (notes.includes('high-pitch') ||
-              notes.includes('low-pitch') ||
-              notes.includes('normal-pitch'))) ||
+              notes.includes('low-pitch'))) ||
           (filters.speedLevel &&
-            (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
-          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
+            (notes.includes('fast') || notes.includes('slow'))) ||
+          (filters.volumeFluctuation && notes.includes('unstable-volume')) ||
           (filters.pitchFluctuation &&
             (notes.includes('volatile') || notes.includes('monotone'))) ||
-          (filters.speedFluctuation && notes.includes('speed-fluctuation'));
+          (filters.speedFluctuation && notes.includes('unstable-speed'));
 
         const matchesTargetRange =
           (filters.aboveTargetRange &&
@@ -269,7 +267,7 @@ const RecordingsList = ({ userId, selectedDate }) => {
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: '1px solid #f0f0f0',
-          height: '160px',  // Fixed height to accommodate audio player
+          minHeight: '200px', // Minimum height, will expand as needed
         }}
         bodyStyle={{
           padding: '16px',
@@ -279,12 +277,13 @@ const RecordingsList = ({ userId, selectedDate }) => {
           justifyContent: 'space-between'
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
           {badges.map((badge, index) => (
             <div key={index} style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              marginBottom: '4px'
             }}>
               <div style={{
                 display: 'inline-flex',
@@ -314,10 +313,14 @@ const RecordingsList = ({ userId, selectedDate }) => {
             </div>
           ))}
         </div>
-        <div>
+        <div style={{ marginTop: 'auto' }}>
           <p>{dayjs(recording.date_recorded).format('MMM D, h:mm A')}</p>
-          <audio controls style={{ width: '100%' }}>
-            <source src={recording.recording_url} type="audio/wav" />
+          <audio 
+            controls 
+            style={{ width: '100%', marginTop: '4px' }}
+            key={recording.recording_url}
+            src={recording.recording_url}
+          >
             Your browser does not support the audio element.
           </audio>
         </div>
@@ -356,9 +359,10 @@ const RecordingsList = ({ userId, selectedDate }) => {
           dataSource={filteredRecordings}
           renderItem={renderRecordingCard}
           locale={{ emptyText: 'No recordings found for the selected period' }}
+          style={{ marginBottom: '60px' }} // Add space at the bottom
         />
       ) : (
-        <Empty description="Select a date to view recordings" />
+        <Empty description="Select a date to view recordings" style={{ marginBottom: '60px' }} />
       )}
     </div>
   );

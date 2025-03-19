@@ -20,27 +20,28 @@ const { Title, Text } = Typography;
 
 const PatientDashboard = () => {
   const [speechData, setSpeechData] = useState([]);
-  const [lastWeekSpeechData, setLastWeekSpeechData] = useState([]);
+  const [previousPeriodSpeechData, setPreviousPeriodSpeechData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [thresholds, setThresholds] = useState(null);
   const [analytics, setAnalytics] = useState({
-    volume: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    pitch: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    speed: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
+    volume: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
+    pitch: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
+    speed: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
     // Add fluctuation analytics
-    volumeFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 },
-    pitchFluctuation: { inRange: 0, unstable: 0, monotone: 0, lastWeekInRange: 0 },
-    speedFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 }
+    volumeFluctuation: { inRange: 0, unstable: 0, previousPeriodInRange: 0 },
+    pitchFluctuation: { inRange: 0, unstable: 0, monotone: 0, previousPeriodInRange: 0 },
+    speedFluctuation: { inRange: 0, unstable: 0, previousPeriodInRange: 0 }
   });
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
   const [granularity, setGranularity] = useState('week');
+  const [comparisonPeriodLabel, setComparisonPeriodLabel] = useState('Last week');
 
   // Calculate analytics from speech data
   useEffect(() => {
     console.log('useEffect');
     console.log('speechData: ', speechData);
-    console.log('lastWeekSpeechData: ', lastWeekSpeechData);
+    console.log('previousPeriodSpeechData: ', previousPeriodSpeechData);
 
     if (thresholds) {
       // Only check for thresholds, allow empty arrays
@@ -49,8 +50,8 @@ const PatientDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const volume = data.metrics.volume;
-                if (volume > thresholds.volume_max) acc.above++;
-                else if (volume < thresholds.volume_min) acc.below++;
+                if (volume > data.thresholds.volume_max) acc.above++;
+                else if (volume < data.thresholds.volume_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -65,8 +66,8 @@ const PatientDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const pitch = data.metrics.pitch;
-                if (pitch > thresholds.pitch_max) acc.above++;
-                else if (pitch < thresholds.pitch_min) acc.below++;
+                if (pitch > data.thresholds.pitch_max) acc.above++;
+                else if (pitch < data.thresholds.pitch_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -79,8 +80,8 @@ const PatientDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const speed = data.metrics.speed;
-                if (speed > thresholds.speed_max) acc.above++;
-                else if (speed < thresholds.speed_min) acc.below++;
+                if (speed > data.thresholds.speed_max) acc.above++;
+                else if (speed < data.thresholds.speed_min) acc.below++;
                 else acc.inRange++;
                 return acc;
               },
@@ -95,7 +96,7 @@ const PatientDashboard = () => {
               (acc, data) => {
                 // Assuming volume_fluctuation is stored in data.metrics
                 const volumeFluctuation = data.metrics.volume_fluctuation || 0;
-                if (volumeFluctuation > thresholds.volume_fluctuation_max) acc.unstable++;
+                if (volumeFluctuation > data.thresholds.volume_fluctuation_max) acc.unstable++;
                 else acc.inRange++;
                 return acc;
               },
@@ -108,8 +109,8 @@ const PatientDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
-                if (pitchFluctuation > thresholds.pitch_fluctuation_max) acc.unstable++;
-                else if (pitchFluctuation < thresholds.pitch_fluctuation_min) acc.monotone++;
+                if (pitchFluctuation > data.thresholds.pitch_fluctuation_max) acc.unstable++;
+                else if (pitchFluctuation < data.thresholds.pitch_fluctuation_min) acc.monotone++;
                 else acc.inRange++;
                 return acc;
               },
@@ -122,7 +123,7 @@ const PatientDashboard = () => {
           ? speechData.reduce(
               (acc, data) => {
                 const speedFluctuation = data.metrics.speed_fluctuation || 0;
-                if (speedFluctuation > thresholds.speed_fluctuation_max) acc.unstable++;
+                if (speedFluctuation > data.thresholds.speed_fluctuation_max) acc.unstable++;
                 else acc.inRange++;
                 return acc;
               },
@@ -130,10 +131,10 @@ const PatientDashboard = () => {
             )
           : { inRange: 0, unstable: 0 };
 
-      // Calculate last week's in-range percentages
-      const lastWeekVolumeInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      // Calculate previous period's in-range percentages
+      const previousPeriodVolumeInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.volume >= data.thresholds.volume_min &&
                 data.metrics.volume <= data.thresholds.volume_max
                 ? acc + 1
@@ -141,11 +142,11 @@ const PatientDashboard = () => {
             }, 0)
           : 0;
 
-      console.log('lastWeekVolumeInRange: ', lastWeekVolumeInRange);
+      console.log('previousPeriodVolumeInRange: ', previousPeriodVolumeInRange);
 
-      const lastWeekPitchInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      const previousPeriodPitchInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.pitch >= data.thresholds.pitch_min &&
                 data.metrics.pitch <= data.thresholds.pitch_max
                 ? acc + 1
@@ -153,9 +154,11 @@ const PatientDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekSpeedInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      console.log('previousPeriodPitchInRange: ', previousPeriodPitchInRange);
+
+      const previousPeriodSpeedInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.speed >= data.thresholds.speed_min &&
                 data.metrics.speed <= data.thresholds.speed_max
                 ? acc + 1
@@ -163,10 +166,12 @@ const PatientDashboard = () => {
             }, 0)
           : 0;
 
-      // Calculate last week's fluctuation in-range percentages
-      const lastWeekVolumeFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      console.log('previousPeriodSpeedInRange: ', previousPeriodSpeedInRange);
+
+      // Calculate previous period's fluctuation in-range percentages
+      const previousPeriodVolumeFluctuationInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const volumeFluctuation = data.metrics.volume_fluctuation || 0;
               return volumeFluctuation <= data.thresholds.volume_fluctuation_max
                 ? acc + 1
@@ -174,9 +179,9 @@ const PatientDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekPitchFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      const previousPeriodPitchFluctuationInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
               return pitchFluctuation >= data.thresholds.pitch_fluctuation_min &&
                 pitchFluctuation <= data.thresholds.pitch_fluctuation_max
@@ -185,9 +190,9 @@ const PatientDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekSpeedFluctuationInRange =
-        lastWeekSpeechData.length > 0
-          ? lastWeekSpeechData.reduce((acc, data) => {
+      const previousPeriodSpeedFluctuationInRange =
+        previousPeriodSpeechData.length > 0
+          ? previousPeriodSpeechData.reduce((acc, data) => {
               const speedFluctuation = data.metrics.speed_fluctuation || 0;
               return speedFluctuation <= data.thresholds.speed_fluctuation_max
                 ? acc + 1
@@ -196,61 +201,61 @@ const PatientDashboard = () => {
           : 0;
 
       const total = speechData.length;
-      const lastWeekTotal = lastWeekSpeechData.length;
+      const previousPeriodTotal = previousPeriodSpeechData.length;
 
-      console.log('lastWeekTotal: ', lastWeekTotal);
+      console.log('previousPeriodTotal: ', previousPeriodTotal);
 
       setAnalytics({
         volume: {
           inRange: total ? Math.round((volumeMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((volumeMetrics.above / total) * 100) : 0,
           below: total ? Math.round((volumeMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekVolumeInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodVolumeInRange / previousPeriodTotal) * 100)
             : 0
         },
         pitch: {
           inRange: total ? Math.round((pitchMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((pitchMetrics.above / total) * 100) : 0,
           below: total ? Math.round((pitchMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekPitchInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodPitchInRange / previousPeriodTotal) * 100)
             : 0
         },
         speed: {
           inRange: total ? Math.round((speedMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((speedMetrics.above / total) * 100) : 0,
           below: total ? Math.round((speedMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekSpeedInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodSpeedInRange / previousPeriodTotal) * 100)
             : 0
         },
         // Add fluctuation analytics
         volumeFluctuation: {
           inRange: total ? Math.round((volumeFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((volumeFluctuationMetrics.unstable / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekVolumeFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodVolumeFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         },
         pitchFluctuation: {
           inRange: total ? Math.round((pitchFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((pitchFluctuationMetrics.unstable / total) * 100) : 0,
           monotone: total ? Math.round((pitchFluctuationMetrics.monotone / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekPitchFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodPitchFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         },
         speedFluctuation: {
           inRange: total ? Math.round((speedFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((speedFluctuationMetrics.unstable / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekSpeedFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodSpeedFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         }
       });
     }
-  }, [speechData, lastWeekSpeechData, thresholds]);
+  }, [speechData, previousPeriodSpeechData, thresholds]);
 
   // Fetch thresholds on component mount
   useEffect(() => {
@@ -288,7 +293,30 @@ const PatientDashboard = () => {
       // Reuse the date that was already selected but with new granularity
       handleDateChange(selectedDate, null, null);
     }
+    
+    // Update comparison period label based on granularity
+    updateComparisonPeriodLabel();
   }, [granularity]); // Add granularity to dependency array
+  
+  // Function to update comparison period label
+  const updateComparisonPeriodLabel = () => {
+    switch (granularity) {
+      case 'day':
+        setComparisonPeriodLabel('Previous day');
+        break;
+      case 'week':
+        setComparisonPeriodLabel('Previous week');
+        break;
+      case 'month':
+        setComparisonPeriodLabel('Previous month');
+        break;
+      case 'year':
+        setComparisonPeriodLabel('Previous year');
+        break;
+      default:
+        setComparisonPeriodLabel('Previous period');
+    }
+  };
 
   // Modify handleDateChange to calculate date ranges based on granularity
   const handleDateChange = async (date, dateString, endDate) => {
@@ -297,28 +325,40 @@ const PatientDashboard = () => {
     const startDate = dayjs(date).startOf('day');
     let formattedStartDate;
     let formattedEndDate;
+    let previousPeriodStartDate;
+    let previousPeriodEndDate;
 
     // Calculate start and end dates based on granularity
     switch (granularity) {
       case 'day':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(1, 'day').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(1, 'day').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.endOf('day').format('YYYY-MM-DD');
         break;
       case 'week':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
         break;
       case 'month':
         formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('month').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
         break;
       case 'year':
         formattedStartDate = startDate.startOf('year').format('YYYY-MM-DD');
         formattedEndDate = startDate.endOf('year').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(1, 'year').startOf('year').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'year').endOf('year').format('YYYY-MM-DD');
         break;
       default:
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.clone().add(7, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
     }
 
     // Always update the selected date first
@@ -338,23 +378,23 @@ const PatientDashboard = () => {
       setSpeechData([]); // Set empty data on error
     }
 
-    // Fetch last week's data for comparison
+    // Fetch previous period's data for comparison
     try {
-      const lastWeekStartDate = startDate.clone().subtract(7, 'days').format('YYYY-MM-DD');
-      const lastWeekEndDate = startDate.format('YYYY-MM-DD');
-      
-      const lastWeekResponse = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
+      const previousPeriodResponse = await axios.get(`http://localhost:8000/api/speechData/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { 
-          startDate: lastWeekStartDate,
-          endDate: lastWeekEndDate
+          startDate: previousPeriodStartDate,
+          endDate: previousPeriodEndDate
         }
       });
-      setLastWeekSpeechData(lastWeekResponse.data);
+      setPreviousPeriodSpeechData(previousPeriodResponse.data);
     } catch (error) {
-      console.error('Error fetching last week data:', error);
-      setLastWeekSpeechData([]); // Set empty data on error
+      console.error('Error fetching previous period data:', error);
+      setPreviousPeriodSpeechData([]); // Set empty data on error
     }
+    
+    // Update comparison period label
+    updateComparisonPeriodLabel();
   };
 
   const renderMetricCard = (title, icon, data, range) => {
@@ -408,10 +448,10 @@ const PatientDashboard = () => {
               {range}
             </Text>
             <div style={{ marginTop: 'auto', textAlign: 'center' }}>
-              <Text type="secondary">Last week: </Text>
+              <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor: data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -419,12 +459,12 @@ const PatientDashboard = () => {
                   gap: '4px'
                 }}
               >
-                {data.inRange - data.lastWeekInRange > 0 ? (
+                {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
                 ) : (
                   <ArrowDownOutlined />
                 )}
-                {Math.abs(data.inRange - data.lastWeekInRange)}%
+                {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
           </div>
@@ -525,10 +565,10 @@ const PatientDashboard = () => {
               {range}
             </Text>
             <div style={{ marginTop: 'auto', textAlign: 'center' }}>
-              <Text type="secondary">Last week: </Text>
+              <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor: data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -536,12 +576,12 @@ const PatientDashboard = () => {
                   gap: '4px'
                 }}
               >
-                {data.inRange - data.lastWeekInRange > 0 ? (
+                {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
                 ) : (
                   <ArrowDownOutlined />
                 )}
-                {Math.abs(data.inRange - data.lastWeekInRange)}%
+                {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
           </div>
@@ -669,7 +709,7 @@ const PatientDashboard = () => {
                     </Row>
 
                     <Title level={4} className="mt-6">Fluctuation</Title>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[16, 16]} style={{ marginBottom: '60px' }}>
                       <Col xs={24} md={8}>
                         {renderFluctuationMetricCard(
                           'Volume',

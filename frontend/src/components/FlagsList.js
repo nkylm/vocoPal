@@ -267,7 +267,7 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: '1px solid #f0f0f0',
-          height: '120px',  // Fixed height instead of aspect ratio
+          minHeight: '140px', // Minimum height, will expand as needed
         }}
         bodyStyle={{
           padding: '16px',
@@ -277,12 +277,13 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           justifyContent: 'space-between'
         }}
       >
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
           {badges.map((badge, index) => (
             <div key={index} style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              marginBottom: '4px'
             }}>
               <div style={{
                 display: 'inline-flex',
@@ -312,7 +313,7 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
             </div>
           ))}
         </div>
-        <Text type="secondary">
+        <Text type="secondary" style={{ marginTop: 'auto' }}>
           {dayjs(flag.date_recorded).format('MMM D, h:mm A')}
         </Text>
       </Card>
@@ -350,9 +351,10 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           dataSource={filteredFlags}
           renderItem={renderFlagCard}
           locale={{ emptyText: 'No flags found for the selected period' }}
+          style={{ marginBottom: '60px' }} // Add space at the bottom
         />
       ) : (
-        <Empty description="Select a date to view flags" />
+        <Empty description="Select a date to view flags" style={{ marginBottom: '60px' }} />
       )}
     </div>
   );
