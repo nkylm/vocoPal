@@ -14,6 +14,7 @@ const SpeechDataSchema = new mongoose.Schema({
     volume_fluctuation: {type: Number, required: true},
     pitch_fluctuation: {type: Number, required: true},
     speed_fluctuation: {type: Number, required: true},
+    ambient_noise: {type: String, required: true}
   },
   thresholds: {
     volume_min: { type: Number, required: true },

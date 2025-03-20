@@ -89,6 +89,8 @@ const PatientDashboard = () => {
             )
           : { inRange: 0, above: 0, below: 0 };
 
+      console.log('speedMetrics: ', speedMetrics);
+
       // Calculate fluctuation metrics
       const volumeFluctuationMetrics =
         speechData.length > 0
@@ -334,9 +336,9 @@ const PatientDashboard = () => {
         break;
       case 'week':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(7, 'days').format('YYYY-MM-DD');
         previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
-        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.endOf('day').format('YYYY-MM-DD');
         break;
       case 'month':
         formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
@@ -457,7 +459,11 @@ const PatientDashboard = () => {
               <span
                 style={{
                   backgroundColor:
-                    data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
+                    data.inRange - data.previousPeriodInRange > 0
+                      ? '#9AD4AB'
+                      : data.inRange - data.previousPeriodInRange < 0
+                        ? '#F08F95'
+                        : '#E0E0E0', // Gray color when the difference is zero
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -467,9 +473,9 @@ const PatientDashboard = () => {
               >
                 {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
-                ) : (
+                ) : data.inRange - data.previousPeriodInRange < 0 ? (
                   <ArrowDownOutlined />
-                )}
+                ) : null}
                 {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
@@ -575,7 +581,11 @@ const PatientDashboard = () => {
               <span
                 style={{
                   backgroundColor:
-                    data.inRange - data.previousPeriodInRange > 0 ? '#9AD4AB' : '#F08F95',
+                    data.inRange - data.previousPeriodInRange > 0
+                      ? '#9AD4AB'
+                      : data.inRange - data.previousPeriodInRange < 0
+                        ? '#F08F95'
+                        : '#E0E0E0', // Gray color when the difference is zero
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -585,9 +595,9 @@ const PatientDashboard = () => {
               >
                 {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
-                ) : (
+                ) : data.inRange - data.previousPeriodInRange < 0 ? (
                   <ArrowDownOutlined />
-                )}
+                ) : null}
                 {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
@@ -677,6 +687,7 @@ const PatientDashboard = () => {
                       <Graph
                         speechData={speechData}
                         selectedDate={selectedDate}
+                        thresholds={thresholds}
                         granularity={granularity}
                       />
                     ) : (
