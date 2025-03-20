@@ -31,9 +31,52 @@ const TherapistSideBar = ({
           <img src={vocalpalLogo} alt="VocoPal" style={{ height: '32px' }} />
         </div>
 
+        {/* Patients Section */}
+        <div>
+          <Title level={5} style={{ margin: '0 0 16px', color: '#666' }}>
+            PATIENTS
+          </Title>
+          {acceptedPatients?.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#666' }}>No patients yet</div>
+          ) : (
+            acceptedPatients?.map((patient) => (
+              <div
+                key={patient.userId._id}
+                onClick={() => onPatientSelect(patient.userId._id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px 8px',
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  backgroundColor:
+                    selectedPatient === patient.userId._id ? '#f0f0f0' : 'transparent',
+                  marginBottom: '4px'
+                }}
+              >
+                <Avatar
+                  style={{
+                    backgroundColor: patient.userId.avatarColor,
+                    marginRight: '12px'
+                  }}
+                >
+                  {patient.userId.initials}
+                </Avatar>
+                <span>{patient.userId.name}</span>
+              </div>
+            ))
+          )}
+        </div>
         {/* Requests Section */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginTop: '16px',
+              marginBottom: '16px'
+            }}
+          >
             <Title level={5} style={{ margin: 0, color: '#666' }}>
               REQUESTS
             </Title>
@@ -79,43 +122,6 @@ const TherapistSideBar = ({
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Patients Section */}
-        <div>
-          <Title level={5} style={{ margin: '0 0 16px', color: '#666' }}>
-            PATIENTS
-          </Title>
-          {acceptedPatients?.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#666' }}>No patients yet</div>
-          ) : (
-            acceptedPatients?.map((patient) => (
-              <div
-                key={patient.userId._id}
-                onClick={() => onPatientSelect(patient.userId._id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px 8px',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  backgroundColor:
-                    selectedPatient === patient.userId._id ? '#f0f0f0' : 'transparent',
-                  marginBottom: '4px'
-                }}
-              >
-                <Avatar
-                  style={{
-                    backgroundColor: patient.userId.avatarColor,
-                    marginRight: '12px'
-                  }}
-                >
-                  {patient.userId.initials}
-                </Avatar>
-                <span>{patient.userId.name}</span>
-              </div>
-            ))
-          )}
         </div>
       </div>
     </Sider>
