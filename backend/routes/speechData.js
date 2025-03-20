@@ -148,6 +148,7 @@ router.get("/:userId/recordings", async (req, res) => {
     }
 
     const recordings = await SpeechData.find(query, {
+      metrics: 1,
       recording_url: 1,
       date_recorded: 1,
       audio_notes: 1,

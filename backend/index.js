@@ -215,7 +215,8 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       speed: response.data.rate_of_speech,
       volume_fluctuation: response.data.volume_fluctuation,
       pitch_fluctuation: response.data.f0_std,
-      speed_fluctuation: response.data.speech_rate_fluctuation
+      speed_fluctuation: response.data.speech_rate_fluctuation,
+      ambient_noise: response.data.ambient_noise
     };
 
     let s3Url = null;

@@ -9,64 +9,64 @@ const ThresholdTable = ({ patientId, readOnly }) => {
   // Predefined ranges for each metric
   const metricRanges = {
     Volume: {
-      level: '60-70 dB',
+      level: '13-18 dB',
       levelOptions: {
-        Narrow: '60-70 dB',
-        Moderate: '55-75 dB',
-        Wide: '50-80 dB'
+        Narrow: '12-16 dB',
+        Moderate: '10-18 dB',
+        Wide: '8-20 dB'
       },
       fluctuationOptions: {
-        Narrow: '± 6 dB',
-        Moderate: '± 10 dB',
-        Wide: '± 15 dB'
+        Narrow: '3.5 dB',
+        Moderate: '4 dB',
+        Wide: '5 dB'
       }
     },
     Pitch: {
-      level: '85-155 Hz',
+      level: '75-165 Hz',
       levelOptions: {
-        Narrow: '85-155 Hz',
-        Moderate: '75-165 Hz',
-        Wide: '65-175 Hz'
+        Narrow: '110-155 Hz',
+        Moderate: '100-165 Hz',
+        Wide: '155-265 Hz'
       },
       fluctuationOptions: {
-        Narrow: '± 20 Hz',
-        Moderate: '± 35 Hz',
-        Wide: '± 50 Hz'
+        Narrow: '25-35 Hz',
+        Moderate: '20-40 Hz',
+        Wide: '10-50 Hz'
       }
     },
     Speed: {
-      level: '4-5 syll/sec',
+      level: '2-4 syll/sec',
       levelOptions: {
-        Narrow: '4-5 syll/sec',
-        Moderate: '3-6 syll/sec',
-        Wide: '2-7 syll/sec'
+        Narrow: '3-4 syll/sec',
+        Moderate: '2-4 syll/sec',
+        Wide: '2-5 syll/sec'
       },
       fluctuationOptions: {
-        Narrow: '± 3 syll/sec',
-        Moderate: '± 4 syll/sec',
-        Wide: '± 5 syll/sec'
+        Narrow: '1 syll/sec',
+        Moderate: '2 syll/sec',
+        Wide: '3 syll/sec'
       }
     }
   };
 
   const volumeFluctuationLimits = {
-    Narrow: 6,
-    Moderate: 10,
-    Wide: 15
+    Narrow: 3.5,
+    Moderate: 4,
+    Wide: 5
   };
 
   // Define specific fluctuation ranges for pitch
   const pitchFluctuationRanges = {
-    Narrow: { min: 5, max: 15 },
-    Moderate: { min: 10, max: 30 },
-    Wide: { min: 20, max: 50 }
+    Narrow: { min: 25, max: 35 },
+    Moderate: { min: 20, max: 40 },
+    Wide: { min: 10, max: 50 }
   };
 
   // Define specific fluctuation upper limits for speed
   const speedFluctuationLimits = {
-    Narrow: 2,
-    Moderate: 4,
-    Wide: 6
+    Narrow: 1,
+    Moderate: 2,
+    Wide: 3
   };
 
   const [data, setData] = useState([
@@ -338,13 +338,9 @@ const ThresholdTable = ({ patientId, readOnly }) => {
           </Select>
           <span style={{ marginLeft: 8, color: '#666' }}>
             {metricRanges[record.metric].fluctuationOptions[record.fluctuationType]}
-            {record.metric === 'Volume' &&
-              ` (Max: ${volumeFluctuationLimits[record.fluctuationType]} db)`}
-            {record.metric === 'Pitch' &&
-              pitchFluctuationRanges[record.fluctuationType] &&
-              ` (${pitchFluctuationRanges[record.fluctuationType].min}-${pitchFluctuationRanges[record.fluctuationType].max} Hz)`}
-            {record.metric === 'Speed' &&
-              ` (Max: ${speedFluctuationLimits[record.fluctuationType]} syll/sec)`}
+            {record.metric === 'Volume'}
+            {record.metric === 'Pitch'}
+            {record.metric === 'Speed'}
           </span>
         </div>
       )

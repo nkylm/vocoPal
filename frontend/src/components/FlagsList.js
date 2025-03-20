@@ -1,13 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { Card, List, Spin, Space, Checkbox, Typography, Row, Col, Empty } from 'antd';
+import {
+  Card,
+  List,
+  Spin,
+  Space,
+  Checkbox,
+  Typography,
+  Row,
+  Col,
+  Empty,
+  Dropdown,
+  Button
+} from 'antd';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
-import { SoundOutlined, RiseOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import {
+  SoundOutlined,
+  RiseOutlined,
+  ThunderboltOutlined,
+  DownOutlined,
+  FilterOutlined
+} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
+const FlagsList = ({ userId, selectedDate }) => {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredFlags, setFilteredFlags] = useState([]);
@@ -17,7 +35,7 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
     pitchLevel: true,
     speedLevel: true,
     volumeFluctuation: false,
-    pitchFluctuation: false,
+    pitchFluctuation: true,
     speedFluctuation: false,
     // Target Range
     aboveTargetRange: true,
@@ -54,34 +72,43 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
     };
 
     fetchFlags();
-  }, [userId, startDate, endDate]);
+  }, [userId, selectedDate]);
 
   useEffect(() => {
+    // Filter flags based on selected filters
     const filterFlags = () => {
       return flags.filter((flag) => {
         const notes = flag.audio_notes;
 
+        // Check if any of the enabled filters match the recording's notes
         const matchesSpeechMetric =
-          (filters.volumeLevel &&
-            (notes.includes('loud') ||
-              notes.includes('quiet') ||
-              notes.includes('normal-volume'))) ||
-          (filters.pitchLevel &&
-            (notes.includes('high-pitch') ||
-              notes.includes('low-pitch') ||
-              notes.includes('normal-pitch'))) ||
-          (filters.speedLevel &&
-            (notes.includes('fast') || notes.includes('slow') || notes.includes('normal-speed'))) ||
-          (filters.volumeFluctuation && notes.includes('volume-fluctuation')) ||
+          (filters.volumeLevel && (notes.includes('loud') || notes.includes('quiet'))) ||
+          (filters.pitchLevel && (notes.includes('high-pitch') || notes.includes('low-pitch'))) ||
+          (filters.speedLevel && (notes.includes('fast') || notes.includes('slow'))) ||
+          (filters.volumeFluctuation && notes.includes('unstable-volume')) ||
           (filters.pitchFluctuation &&
-            (notes.includes('volatile') || notes.includes('monotone'))) ||
-          (filters.speedFluctuation && notes.includes('speed-fluctuation'));
+            (notes.includes('unstable-pitch') || notes.includes('monotone'))) ||
+          (filters.speedFluctuation && notes.includes('unstable-speed'));
 
+        // Separate the notes into above and below target range
+        const aboveTargetNotes =
+          notes.includes('loud') ||
+          notes.includes('high-pitch') ||
+          notes.includes('fast') ||
+          notes.includes('unstable-pitch') ||
+          notes.includes('unstable-volume') ||
+          notes.includes('unstable-speed');
+
+        const belowTargetNotes =
+          notes.includes('quiet') ||
+          notes.includes('low-pitch') ||
+          notes.includes('slow') ||
+          notes.includes('monotone');
+
+        // Check if the recording matches the selected target range filters
         const matchesTargetRange =
-          (filters.aboveTargetRange &&
-            (notes.includes('loud') || notes.includes('high-pitch') || notes.includes('fast'))) ||
-          (filters.belowTargetRange &&
-            (notes.includes('quiet') || notes.includes('low-pitch') || notes.includes('slow')));
+          (filters.aboveTargetRange && aboveTargetNotes) ||
+          (filters.belowTargetRange && belowTargetNotes);
 
         return matchesSpeechMetric && matchesTargetRange;
       });
@@ -97,71 +124,97 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
     }));
   };
 
-  const FilterSection = () => (
-    <Card className="mb-4">
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Row>
-          <Col span={12}>
-            <Title level={5}>SPEECH METRIC</Title>
-            <Space direction="vertical">
-              <Checkbox
-                checked={filters.volumeLevel}
-                onChange={() => handleFilterChange('volumeLevel')}
-              >
-                Volume Level
-              </Checkbox>
-              <Checkbox
-                checked={filters.pitchLevel}
-                onChange={() => handleFilterChange('pitchLevel')}
-              >
-                Pitch Level
-              </Checkbox>
-              <Checkbox
-                checked={filters.speedLevel}
-                onChange={() => handleFilterChange('speedLevel')}
-              >
-                Speed Level
-              </Checkbox>
-              <Checkbox
-                checked={filters.volumeFluctuation}
-                onChange={() => handleFilterChange('volumeFluctuation')}
-              >
-                Volume Fluctuation
-              </Checkbox>
-              <Checkbox
-                checked={filters.pitchFluctuation}
-                onChange={() => handleFilterChange('pitchFluctuation')}
-              >
-                Pitch Fluctuation
-              </Checkbox>
-              <Checkbox
-                checked={filters.speedFluctuation}
-                onChange={() => handleFilterChange('speedFluctuation')}
-              >
-                Speed Fluctuation
-              </Checkbox>
-            </Space>
-          </Col>
-          <Col span={12}>
-            <Title level={5}>TARGET RANGE</Title>
-            <Space direction="vertical">
-              <Checkbox
-                checked={filters.aboveTargetRange}
-                onChange={() => handleFilterChange('aboveTargetRange')}
-              >
-                Above Target Range
-              </Checkbox>
-              <Checkbox
-                checked={filters.belowTargetRange}
-                onChange={() => handleFilterChange('belowTargetRange')}
-              >
-                Below Target Range
-              </Checkbox>
-            </Space>
-          </Col>
-        </Row>
-      </Space>
-    </Card>
+  const FilterDropdownContent = () => (
+    <div
+      style={{
+        padding: '16px',
+        width: '250px',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow:
+          '0 6px 16px -8px rgba(0,0,0,0.08), 0 9px 28px 0 rgba(0,0,0,0.05), 0 12px 48px 16px rgba(0,0,0,0.03)'
+      }}
+    >
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={5} style={{ color: '#6C757D', fontWeight: 600, marginBottom: '16px' }}>
+          SPEECH METRIC
+        </Title>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div>
+            <Checkbox
+              checked={filters.volumeLevel}
+              onChange={() => handleFilterChange('volumeLevel')}
+            >
+              <Text style={{ fontSize: '14px' }}>Volume Level</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.pitchLevel}
+              onChange={() => handleFilterChange('pitchLevel')}
+            >
+              <Text style={{ fontSize: '14px' }}>Pitch Level</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.speedLevel}
+              onChange={() => handleFilterChange('speedLevel')}
+            >
+              <Text style={{ fontSize: '14px' }}>Speed Level</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.volumeFluctuation}
+              onChange={() => handleFilterChange('volumeFluctuation')}
+            >
+              <Text style={{ fontSize: '14px' }}>Volume Fluctuation</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.pitchFluctuation}
+              onChange={() => handleFilterChange('pitchFluctuation')}
+            >
+              <Text style={{ fontSize: '14px' }}>Pitch Fluctuation</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.speedFluctuation}
+              onChange={() => handleFilterChange('speedFluctuation')}
+            >
+              <Text style={{ fontSize: '14px' }}>Speed Fluctuation</Text>
+            </Checkbox>
+          </div>
+        </Space>
+      </div>
+
+      <div>
+        <Title level={5} style={{ color: '#6C757D', fontWeight: 600, marginBottom: '16px' }}>
+          TARGET RANGE
+        </Title>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div>
+            <Checkbox
+              checked={filters.aboveTargetRange}
+              onChange={() => handleFilterChange('aboveTargetRange')}
+            >
+              <Text style={{ fontSize: '14px' }}>Above Target Range</Text>
+            </Checkbox>
+          </div>
+          <div>
+            <Checkbox
+              checked={filters.belowTargetRange}
+              onChange={() => handleFilterChange('belowTargetRange')}
+            >
+              <Text style={{ fontSize: '14px' }}>Below Target Range</Text>
+            </Checkbox>
+          </div>
+        </Space>
+      </div>
+    </div>
   );
 
   const renderFlagCard = (flag) => {
@@ -169,7 +222,7 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
       const badges = [];
       const notes = flag.audio_notes;
 
-      // Volume badge
+      // Volume badges
       if (notes.includes('loud')) {
         badges.push({
           type: 'Volume',
@@ -177,7 +230,8 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <SoundOutlined />,
           direction: '↑',
           bgColor: '#e6f4ff',
-          iconColor: '#1890ff'
+          color: '#1890ff',
+          textColor: '#1890ff'
         });
       } else if (notes.includes('quiet')) {
         badges.push({
@@ -186,11 +240,23 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <SoundOutlined />,
           direction: '↓',
           bgColor: '#e6f4ff',
-          iconColor: '#1890ff'
+          color: '#1890ff',
+          textColor: '#1890ff'
+        });
+      }
+      if (notes.includes('unstable-volume')) {
+        badges.push({
+          type: 'Volume',
+          value: 'Unstable',
+          icon: <SoundOutlined />,
+          direction: '↕',
+          bgColor: '#e6f4ff',
+          color: '#1890ff',
+          textColor: '#1890ff'
         });
       }
 
-      // Pitch badge
+      // Pitch badges
       if (notes.includes('high-pitch')) {
         badges.push({
           type: 'Pitch',
@@ -198,7 +264,8 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <RiseOutlined />,
           direction: '↑',
           bgColor: '#fff7e6',
-          iconColor: '#faad14'
+          color: '#faad14',
+          textColor: '#d48806'
         });
       } else if (notes.includes('low-pitch')) {
         badges.push({
@@ -207,29 +274,33 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <RiseOutlined />,
           direction: '↓',
           bgColor: '#fff7e6',
-          iconColor: '#faad14'
+          color: '#faad14',
+          textColor: '#d48806'
         });
-      } else if (notes.includes('volatile')) {
+      }
+      if (notes.includes('unstable-pitch')) {
         badges.push({
           type: 'Pitch',
-          value: 'Volatile',
+          value: 'Unstable',
           icon: <RiseOutlined />,
-          direction: '↑',
+          direction: '↕',
           bgColor: '#fff7e6',
-          iconColor: '#faad14'
+          color: '#faad14',
+          textColor: '#d48806'
         });
       } else if (notes.includes('monotone')) {
         badges.push({
           type: 'Pitch',
           value: 'Monotone',
           icon: <RiseOutlined />,
-          direction: '↓',
+          direction: '→',
           bgColor: '#fff7e6',
-          iconColor: '#faad14'
+          color: '#faad14',
+          textColor: '#d48806'
         });
       }
 
-      // Speed badge
+      // Speed badges
       if (notes.includes('fast')) {
         badges.push({
           type: 'Speed',
@@ -237,7 +308,8 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <ThunderboltOutlined />,
           direction: '↑',
           bgColor: '#f9f0ff',
-          iconColor: '#722ed1'
+          color: '#722ed1',
+          textColor: '#722ed1'
         });
       } else if (notes.includes('slow')) {
         badges.push({
@@ -246,7 +318,19 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
           icon: <ThunderboltOutlined />,
           direction: '↓',
           bgColor: '#f9f0ff',
-          iconColor: '#722ed1'
+          color: '#722ed1',
+          textColor: '#722ed1'
+        });
+      }
+      if (notes.includes('unstable-speed')) {
+        badges.push({
+          type: 'Speed',
+          value: 'Unstable',
+          icon: <ThunderboltOutlined />,
+          direction: '↕',
+          bgColor: '#f9f0ff',
+          color: '#722ed1',
+          textColor: '#722ed1'
         });
       }
 
@@ -256,110 +340,152 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
     const badges = getMetricBadges();
 
     return (
-      <Card
-        style={{
-          width: '100%',
-          marginBottom: '16px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          border: '1px solid #f0f0f0',
-          minHeight: '140px' // Minimum height, will expand as needed
-        }}
-        bodyStyle={{
-          padding: '16px',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}
-      >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-          {badges.map((badge, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                marginBottom: '4px'
-              }}
-            >
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  backgroundColor: badge.bgColor
-                }}
-              >
-                {React.cloneElement(badge.icon, {
-                  style: {
-                    fontSize: '16px',
-                    color: badge.iconColor
-                  }
-                })}
-                <Text strong>{badge.type}</Text>
+      <div style={{ padding: '0 8px' }}>
+        <Card
+          style={{
+            width: '100%',
+            marginBottom: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid #f0f0f0',
+            minHeight: '200px'
+          }}
+          bodyStyle={{
+            padding: '16px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            {badges.map((badge, index) => (
+              <div key={index} style={{ display: 'flex', marginBottom: '8px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '4px 12px',
+                    borderRadius: '6px 0 0 6px',
+                    backgroundColor: badge.bgColor
+                  }}
+                >
+                  {React.cloneElement(badge.icon, {
+                    style: {
+                      fontSize: '16px',
+                      color: badge.color
+                    }
+                  })}
+                  <Text strong style={{ color: badge.textColor, marginLeft: '4px' }}>
+                    {badge.type}
+                  </Text>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px 12px',
+                    borderRadius: '0 6px 6px 0',
+                    backgroundColor: '#f5f5f5'
+                  }}
+                >
+                  <Text>
+                    {badge.value} {badge.direction}
+                  </Text>
+                </div>
               </div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  backgroundColor: '#f5f5f5'
-                }}
-              >
-                <Text>
-                  {badge.value} {badge.direction}
-                </Text>
-              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 'auto' }}>
+            <Text type="secondary" style={{ fontSize: '14px' }}>
+              {dayjs(flag.date_recorded).format('MMM D, h:mm a')}
+            </Text>
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Background noise: {capitalizeFirst(flag.metrics.ambient_noise)}
+              </Text>
             </div>
-          ))}
-        </div>
-        <Text type="secondary" style={{ marginTop: 'auto' }}>
-          {dayjs(flag.date_recorded).format('MMM D, h:mm A')}
-        </Text>
-      </Card>
+          </div>
+        </Card>
+      </div>
     );
   };
 
-  if (loading) {
-    return <Spin tip="Loading flags..." />;
-  }
+  // Helper function to capitalize first letter
+  const capitalizeFirst = (str) => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
 
   return (
     <div>
-      <FilterSection />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <Title level={4}>Flags</Title>
-        {selectedDate ? (
-          <span>
-            Showing {filteredFlags.length} of {flags.length}
-          </span>
-        ) : (
-          <span>Please select a date to view flags</span>
-        )}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Title level={4} style={{ margin: 0 }}>
+            Flagged recordings
+          </Title>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {selectedDate ? (
+            <Text type="secondary">
+              Showing {filteredFlags.length} of {flags.length}
+            </Text>
+          ) : (
+            <Text type="secondary">Please select a date to view recordings</Text>
+          )}
+
+          <Dropdown
+            overlay={<FilterDropdownContent />}
+            trigger={['click']}
+            placement="bottomRight"
+            overlayStyle={{ width: '280px' }}
+          >
+            <Button style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+              Filter ({Object.values(filters).filter(Boolean).length}) <DownOutlined />
+            </Button>
+          </Dropdown>
+        </div>
       </div>
-      {selectedDate ? (
+
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+          <Spin tip="Loading recordings..." />
+        </div>
+      ) : selectedDate ? (
         <List
           grid={{
-            gutter: 32,
+            gutter: 16,
             xs: 1,
-            sm: 2,
-            md: 2,
+            sm: 1,
+            md: 3,
             lg: 4,
             xl: 4,
             xxl: 4
           }}
           dataSource={filteredFlags}
           renderItem={renderFlagCard}
-          locale={{ emptyText: 'No flags found for the selected period' }}
-          style={{ marginBottom: '60px' }} // Add space at the bottom
+          locale={{
+            emptyText: <Empty description="No recordings found for the selected period" />
+          }}
+          style={{ marginBottom: '60px' }}
         />
       ) : (
-        <Empty description="Select a date to view flags" style={{ marginBottom: '60px' }} />
+        <Empty
+          description="Select a date to view recordings"
+          style={{ marginTop: '48px', marginBottom: '60px' }}
+        />
       )}
     </div>
   );
@@ -367,9 +493,7 @@ const FlagsList = ({ userId, selectedDate, startDate, endDate }) => {
 
 FlagsList.propTypes = {
   userId: PropTypes.string.isRequired,
-  selectedDate: PropTypes.string,
-  startDate: PropTypes.string,
-  endDate: PropTypes.string
+  selectedDate: PropTypes.string
 };
 
 export default FlagsList;

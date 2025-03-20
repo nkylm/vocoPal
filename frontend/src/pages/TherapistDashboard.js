@@ -29,12 +29,12 @@ const TherapistDashboard = () => {
   const [thresholds, setThresholds] = useState(null);
   const [hasRecordingsAccess, setHasRecordingsAccess] = useState(false);
   const [analytics, setAnalytics] = useState({
-    volume: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    pitch: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    speed: { inRange: 0, above: 0, below: 0, lastWeekInRange: 0 },
-    volumeFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 },
-    pitchFluctuation: { inRange: 0, unstable: 0, monotone: 0, lastWeekInRange: 0 },
-    speedFluctuation: { inRange: 0, unstable: 0, lastWeekInRange: 0 }
+    volume: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
+    pitch: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
+    speed: { inRange: 0, above: 0, below: 0, previousPeriodInRange: 0 },
+    volumeFluctuation: { inRange: 0, unstable: 0, previousPeriodInRange: 0 },
+    pitchFluctuation: { inRange: 0, unstable: 0, monotone: 0, previousPeriodInRange: 0 },
+    speedFluctuation: { inRange: 0, unstable: 0, previousPeriodInRange: 0 }
   });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [granularity, setGranularity] = useState('week');
@@ -159,8 +159,8 @@ const TherapistDashboard = () => {
             )
           : { inRange: 0, unstable: 0 };
 
-      // Calculate last week's in-range percentages
-      const lastWeekVolumeInRange =
+      // Calculate previous period's in-range percentages
+      const previousPeriodVolumeInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.volume >= data.thresholds.volume_min &&
@@ -170,7 +170,9 @@ const TherapistDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekPitchInRange =
+      console.log('previousPeriodVolumeInRange: ', previousPeriodVolumeInRange);
+
+      const previousPeriodPitchInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.pitch >= data.thresholds.pitch_min &&
@@ -180,7 +182,9 @@ const TherapistDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekSpeedInRange =
+      console.log('previousPeriodPitchInRange: ', previousPeriodPitchInRange);
+
+      const previousPeriodSpeedInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               return data.metrics.speed >= data.thresholds.speed_min &&
@@ -190,8 +194,10 @@ const TherapistDashboard = () => {
             }, 0)
           : 0;
 
-      // Calculate last week's fluctuation in-range percentages
-      const lastWeekVolumeFluctuationInRange =
+      console.log('previousPeriodSpeedInRange: ', previousPeriodSpeedInRange);
+
+      // Calculate previous period's fluctuation in-range percentages
+      const previousPeriodVolumeFluctuationInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               const volumeFluctuation = data.metrics.volume_fluctuation || 0;
@@ -199,7 +205,7 @@ const TherapistDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekPitchFluctuationInRange =
+      const previousPeriodPitchFluctuationInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               const pitchFluctuation = data.metrics.pitch_fluctuation || 0;
@@ -210,7 +216,7 @@ const TherapistDashboard = () => {
             }, 0)
           : 0;
 
-      const lastWeekSpeedFluctuationInRange =
+      const previousPeriodSpeedFluctuationInRange =
         previousPeriodSpeechData.length > 0
           ? previousPeriodSpeechData.reduce((acc, data) => {
               const speedFluctuation = data.metrics.speed_fluctuation || 0;
@@ -219,53 +225,54 @@ const TherapistDashboard = () => {
           : 0;
 
       const total = speechData.length;
-      const lastWeekTotal = previousPeriodSpeechData.length;
+      const previousPeriodTotal = previousPeriodSpeechData.length;
 
       setAnalytics({
         volume: {
           inRange: total ? Math.round((volumeMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((volumeMetrics.above / total) * 100) : 0,
           below: total ? Math.round((volumeMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekVolumeInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodVolumeInRange / previousPeriodTotal) * 100)
             : 0
         },
         pitch: {
           inRange: total ? Math.round((pitchMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((pitchMetrics.above / total) * 100) : 0,
           below: total ? Math.round((pitchMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekPitchInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodPitchInRange / previousPeriodTotal) * 100)
             : 0
         },
         speed: {
           inRange: total ? Math.round((speedMetrics.inRange / total) * 100) : 0,
           above: total ? Math.round((speedMetrics.above / total) * 100) : 0,
           below: total ? Math.round((speedMetrics.below / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekSpeedInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodSpeedInRange / previousPeriodTotal) * 100)
             : 0
         },
+        // Add fluctuation analytics
         volumeFluctuation: {
           inRange: total ? Math.round((volumeFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((volumeFluctuationMetrics.unstable / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekVolumeFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodVolumeFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         },
         pitchFluctuation: {
           inRange: total ? Math.round((pitchFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((pitchFluctuationMetrics.unstable / total) * 100) : 0,
           monotone: total ? Math.round((pitchFluctuationMetrics.monotone / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekPitchFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodPitchFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         },
         speedFluctuation: {
           inRange: total ? Math.round((speedFluctuationMetrics.inRange / total) * 100) : 0,
           unstable: total ? Math.round((speedFluctuationMetrics.unstable / total) * 100) : 0,
-          lastWeekInRange: lastWeekTotal
-            ? Math.round((lastWeekSpeedFluctuationInRange / lastWeekTotal) * 100)
+          previousPeriodInRange: previousPeriodTotal
+            ? Math.round((previousPeriodSpeedFluctuationInRange / previousPeriodTotal) * 100)
             : 0
         }
       });
@@ -358,9 +365,9 @@ const TherapistDashboard = () => {
         break;
       case 'week':
         formattedStartDate = startDate.format('YYYY-MM-DD');
-        formattedEndDate = startDate.add(6, 'days').format('YYYY-MM-DD');
+        formattedEndDate = startDate.add(7, 'days').format('YYYY-MM-DD');
         previousPeriodStartDate = startDate.subtract(7, 'days').format('YYYY-MM-DD');
-        previousPeriodEndDate = startDate.subtract(1, 'day').format('YYYY-MM-DD');
+        previousPeriodEndDate = startDate.endOf('day').format('YYYY-MM-DD');
         break;
       case 'month':
         formattedStartDate = startDate.startOf('month').format('YYYY-MM-DD');
@@ -510,7 +517,12 @@ const TherapistDashboard = () => {
               <Text type="secondary">{comparisonPeriodLabel}: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor:
+                    data.inRange - data.previousPeriodInRange > 0
+                      ? '#9AD4AB'
+                      : data.inRange - data.previousPeriodInRange < 0
+                        ? '#F08F95'
+                        : '#E0E0E0', // Gray color when the difference is zero
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -518,12 +530,12 @@ const TherapistDashboard = () => {
                   gap: '4px'
                 }}
               >
-                {data.inRange - data.lastWeekInRange > 0 ? (
+                {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
-                ) : (
+                ) : data.inRange - data.previousPeriodInRange < 0 ? (
                   <ArrowDownOutlined />
-                )}
-                {Math.abs(data.inRange - data.lastWeekInRange)}%
+                ) : null}
+                {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
           </div>
@@ -626,7 +638,12 @@ const TherapistDashboard = () => {
               <Text type="secondary">Last week: </Text>
               <span
                 style={{
-                  backgroundColor: data.inRange - data.lastWeekInRange > 0 ? '#9AD4AB' : '#F08F95',
+                  backgroundColor:
+                    data.inRange - data.previousPeriodInRange > 0
+                      ? '#9AD4AB'
+                      : data.inRange - data.previousPeriodInRange < 0
+                        ? '#F08F95'
+                        : '#E0E0E0', // Gray color when the difference is zero
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'inline-flex',
@@ -634,12 +651,12 @@ const TherapistDashboard = () => {
                   gap: '4px'
                 }}
               >
-                {data.inRange - data.lastWeekInRange > 0 ? (
+                {data.inRange - data.previousPeriodInRange > 0 ? (
                   <ArrowUpOutlined />
-                ) : (
+                ) : data.inRange - data.previousPeriodInRange < 0 ? (
                   <ArrowDownOutlined />
-                )}
-                {Math.abs(data.inRange - data.lastWeekInRange)}%
+                ) : null}
+                {Math.abs(data.inRange - data.previousPeriodInRange)}%
               </span>
             </div>
           </div>
@@ -713,6 +730,7 @@ const TherapistDashboard = () => {
               <Graph
                 speechData={speechData}
                 selectedDate={selectedDate}
+                thresholds={thresholds}
                 granularity={granularity}
               />
             ) : (

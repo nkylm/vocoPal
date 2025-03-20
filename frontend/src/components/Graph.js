@@ -14,239 +14,180 @@ import { Line } from 'react-chartjs-2';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import { Radio, Dropdown } from 'antd';
 
 // Extend dayjs with required plugins
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
-dayjs.extend(timezone);
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const GraphComponent = ({ speechData, selectedDate, granularity }) => {
+const GraphComponent = ({ speechData, selectedDate, thresholds, granularity }) => {
   const [displayMode, setDisplayMode] = useState('inRange'); // 'inRange', 'aboveRange', 'belowRange'
   const [metricType, setMetricType] = useState('level'); // 'level', 'fluctuation'
 
-  // Get browser's timezone
-  const browserTimezone = dayjs.tz.guess();
-
-  if (!selectedDate || speechData.length === 0) {
+  if (!selectedDate || !thresholds) {
     return <p>Please select a date to view the graph.</p>;
   }
 
+  // Generate date labels based on granularity
   const getDateLabels = () => {
-    // Convert selectedDate to browser timezone
-    const parsedDate = dayjs(selectedDate).tz(browserTimezone);
-    let dates = [];
+    const parsedDate = dayjs(selectedDate);
 
     switch (granularity) {
       case 'day':
-        dates = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-        break;
+        // Generate hours with AM/PM format for better readability
+        return Array.from({ length: 24 }, (_, i) => {
+          const hour = i;
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+          return `${displayHour}${ampm}`;
+        });
       case 'week':
-        dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('ddd D'));
-        break;
+        return Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('ddd D'));
       case 'month':
-        dates = Array.from({ length: parsedDate.daysInMonth() }, (_, i) => (i + 1).toString());
-        break;
+        return Array.from({ length: parsedDate.daysInMonth() }, (_, i) => (i + 1).toString());
       case 'year':
-        dates = Array.from({ length: 12 }, (_, i) => parsedDate.month(i).format('MMM'));
-        break;
+        return Array.from({ length: 12 }, (_, i) => parsedDate.month(i).format('MMM'));
       default:
-        dates = Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('D'));
+        return Array.from({ length: 7 }, (_, i) => parsedDate.add(i, 'day').format('D'));
     }
-    return dates;
   };
 
-  // Helper function to get target threshold ranges for metrics
-  const getTargetThresholds = (metric) => {
-    // Initialize with default values
-    const defaultThresholds = {
-      volume: { min: 40, max: 70, unit: 'dB' },
-      pitch: { min: 100, max: 200, unit: 'Hz' },
-      speed: { min: 3.5, max: 6.5, unit: 'syll/sec' },
-      volume_fluctuation: { max: 15, unit: 'dB/s' },
-      pitch_fluctuation: { min: 20, max: 150, unit: 'Hz/s' },
-      speed_fluctuation: { max: 2, unit: 'syll/sec²' }
-    };
-
-    // If we have threshold data in the first entry, use it
-    if (speechData.length > 0 && speechData[0].thresholds) {
-      const thresholds = speechData[0].thresholds;
-      return {
-        volume: {
-          min: thresholds.volume_min,
-          max: thresholds.volume_max,
-          unit: 'dB'
-        },
-        pitch: {
-          min: thresholds.pitch_min,
-          max: thresholds.pitch_max,
-          unit: 'Hz'
-        },
-        speed: {
-          min: thresholds.speed_min,
-          max: thresholds.speed_max,
-          unit: 'syll/sec'
-        },
-        volume_fluctuation: {
-          max: thresholds.volume_fluctuation_max,
-          unit: 'dB/s'
-        },
-        pitch_fluctuation: {
-          min: thresholds.pitch_fluctuation_min,
-          max: thresholds.pitch_fluctuation_max,
-          unit: 'Hz/s'
-        },
-        speed_fluctuation: {
-          max: thresholds.speed_fluctuation_max,
-          unit: 'syll/sec²'
-        }
-      };
-    }
-    return defaultThresholds;
-  };
-
-  // Helper function to calculate percentages for each range type
+  // Calculate percentages for a specific date label
   const calculatePercentages = (dateLabel, rangeType) => {
-    const getDataForPeriod = () => {
+    // Filter data for the specific label
+    const dataForLabel = speechData.filter((entry) => {
+      const entryDate = dayjs(entry.date_recorded);
       switch (granularity) {
-        case 'day':
-          return speechData.filter((entry) => {
-            // Convert entry date to browser timezone and compare hours
-            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
-            return entryDate.format('HH') === dateLabel;
-          });
+        case 'day': {
+          // Parse the hour from the label (e.g., "1AM" -> 1, "3PM" -> 15)
+          const match = dateLabel.match(/(\d+)([AP]M)/);
+          if (!match) return false;
+
+          let hour = parseInt(match[1], 10);
+          if (match[2] === 'PM' && hour < 12) hour += 12;
+          if (match[2] === 'AM' && hour === 12) hour = 0;
+
+          return entryDate.hour() === hour;
+        }
         case 'week':
-          return speechData.filter((entry) => {
-            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
-            return entryDate.format('ddd D') === dateLabel;
-          });
+          return entryDate.format('ddd D') === dateLabel;
         case 'month':
-          return speechData.filter((entry) => {
-            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
-            return entryDate.format('D') === dateLabel;
-          });
+          return entryDate.format('D') === dateLabel;
         case 'year':
-          return speechData.filter((entry) => {
-            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
-            return entryDate.format('MMM') === dateLabel;
-          });
+          return entryDate.format('MMM') === dateLabel;
         default:
-          return speechData.filter((entry) => {
-            const entryDate = dayjs(entry.date_recorded).tz(browserTimezone);
-            return entryDate.format('D') === dateLabel;
-          });
+          return entryDate.format('D') === dateLabel;
       }
-    };
+    });
 
-    const dataForPeriod = getDataForPeriod();
-
-    if (dataForPeriod.length === 0) {
+    // If no data for this label, return zeros
+    if (dataForLabel.length === 0) {
       return metricType === 'level'
         ? { volume: 0, pitch: 0, speed: 0 }
         : { volume_fluctuation: 0, pitch_fluctuation: 0, speed_fluctuation: 0 };
     }
 
     if (metricType === 'level') {
-      // Handle level metrics (volume, pitch, speed)
-      const getMetricStatus = (notes, metric) => {
-        const normalNote = `normal-${metric}`;
-        const aboveNotes = {
-          volume: 'loud',
-          pitch: 'high-pitch',
-          speed: 'fast'
-        };
-        const belowNotes = {
-          volume: 'quiet',
-          pitch: 'low-pitch',
-          speed: 'slow'
-        };
-
-        if (rangeType === 'inRange') return notes.includes(normalNote);
-        if (rangeType === 'aboveRange') return notes.includes(aboveNotes[metric]);
-        if (rangeType === 'belowRange') return notes.includes(belowNotes[metric]);
-        return false;
-      };
-
+      // Calculate level metrics
       const metrics = {
         volume: 0,
         pitch: 0,
         speed: 0
       };
 
+      // Calculate percentage for each metric
       Object.keys(metrics).forEach((metric) => {
-        const matchingEntries = dataForPeriod.filter((entry) =>
-          getMetricStatus(entry.audio_notes, metric)
-        ).length;
-        metrics[metric] = (matchingEntries / dataForPeriod.length) * 100;
+        const matchingEntries = dataForLabel.filter((entry) => {
+          const value = entry.metrics[metric];
+          const min = entry.thresholds[`${metric}_min`];
+          const max = entry.thresholds[`${metric}_max`];
+
+          if (rangeType === 'inRange') {
+            return value >= min && value <= max;
+          } else if (rangeType === 'aboveRange') {
+            return value > max;
+          } else if (rangeType === 'belowRange') {
+            return value < min;
+          }
+          return false;
+        }).length;
+
+        metrics[metric] = (matchingEntries / dataForLabel.length) * 100;
       });
 
       return metrics;
     } else {
-      // Handle fluctuation metrics
-      const getFluctuationStatus = (notes, metric) => {
-        const stableNote = `stable-${metric}`;
-        const unstableNote = `unstable-${metric}`;
-        const specialNotes = {
-          pitch: 'monotone' // Special case for pitch
-        };
-
-        if (rangeType === 'inRange') {
-          return (
-            notes.includes(stableNote) || (metric === 'pitch' && notes.includes(specialNotes.pitch))
-          );
-        }
-        if (rangeType === 'aboveRange') return notes.includes(unstableNote);
-        if (rangeType === 'belowRange') return false; // Not applicable for fluctuations
-        return false;
-      };
-
+      // Calculate fluctuation metrics
       const metrics = {
         volume_fluctuation: 0,
         pitch_fluctuation: 0,
         speed_fluctuation: 0
       };
 
+      // Calculate percentage for each fluctuation metric
       Object.keys(metrics).forEach((fullMetric) => {
-        const metric = fullMetric.split('_')[0]; // Extract base metric name
-        const matchingEntries = dataForPeriod.filter((entry) =>
-          getFluctuationStatus(entry.audio_notes, metric)
-        ).length;
-        metrics[fullMetric] = (matchingEntries / dataForPeriod.length) * 100;
+        const baseMetric = fullMetric.split('_')[0]; // Extract base metric name
+        const matchingEntries = dataForLabel.filter((entry) => {
+          const value =
+            entry.metrics[fullMetric] || entry.metrics[`${baseMetric}_fluctuation`] || 0;
+
+          if (rangeType === 'inRange') {
+            if (fullMetric === 'pitch_fluctuation') {
+              const min = entry.thresholds.pitch_fluctuation_min;
+              const max = entry.thresholds.pitch_fluctuation_max;
+              return value >= min && value <= max;
+            } else {
+              const max = entry.thresholds[`${baseMetric}_fluctuation_max`];
+              return value <= max;
+            }
+          } else if (rangeType === 'aboveRange') {
+            if (fullMetric === 'pitch_fluctuation') {
+              const max = entry.thresholds.pitch_fluctuation_max;
+              return value > max;
+            } else {
+              const max = entry.thresholds[`${baseMetric}_fluctuation_max`];
+              return value > max;
+            }
+          } else if (rangeType === 'belowRange') {
+            // Only applicable to pitch (monotone)
+            if (fullMetric === 'pitch_fluctuation') {
+              const min = entry.thresholds.pitch_fluctuation_min;
+              return value < min;
+            }
+            return false;
+          }
+          return false;
+        }).length;
+
+        metrics[fullMetric] = (matchingEntries / dataForLabel.length) * 100;
       });
 
       return metrics;
     }
   };
 
-  const labels = getDateLabels();
-  const percentages = labels.map((label) => calculatePercentages(label, displayMode));
-  const thresholds = getTargetThresholds();
-
-  // Generate tooltip titles based on metric type
+  // Generate tooltip labels
   const generateTooltipLabel = (metric) => {
     if (metricType === 'level') {
-      // Format for level metrics
-      const ranges = {
-        volume: `${thresholds.volume.min}-${thresholds.volume.max} ${thresholds.volume.unit}`,
-        pitch: `${thresholds.pitch.min}-${thresholds.pitch.max} ${thresholds.pitch.unit}`,
-        speed: `${thresholds.speed.min}-${thresholds.speed.max} ${thresholds.speed.unit}`
-      };
-      return ranges[metric];
+      return `${thresholds[`${metric}_min`]}-${thresholds[`${metric}_max`]} ${metric === 'volume' ? 'dB' : metric === 'pitch' ? 'Hz' : 'syll/sec'}`;
     } else {
       // Format for fluctuation metrics
       const fluctName = `${metric}_fluctuation`;
       if (fluctName === 'pitch_fluctuation') {
-        return `${thresholds.pitch_fluctuation.min}-${thresholds.pitch_fluctuation.max} ${thresholds.pitch_fluctuation.unit}`;
+        return `${thresholds.pitch_fluctuation_min}-${thresholds.pitch_fluctuation_max} Hz`;
       } else {
         const fluctMetric = metric === 'volume' ? 'volume_fluctuation' : 'speed_fluctuation';
-        return `Max: ${thresholds[fluctMetric].max} ${thresholds[fluctMetric].unit}`;
+        return `Max: ${thresholds[`${fluctMetric}_max`]} ${metric === 'volume' ? 'dB' : 'syll/sec'}`;
       }
     }
   };
+
+  // Prepare data for chart
+  const labels = getDateLabels();
+  const percentages = labels.map((label) => calculatePercentages(label, displayMode));
 
   // Prepare chart data
   const chartData = {
@@ -301,26 +242,35 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
           ]
   };
 
+  // Display mode titles
   const titles = {
     inRange: 'Percentage in Target Range',
     aboveRange: 'Percentage Above Target Range',
     belowRange: 'Percentage Below Target Range'
   };
 
+  // Dropdown menu items
   const dropdownItems = [
-    {
-      key: 'inRange',
-      label: 'Percentage in Target Range'
-    },
-    {
-      key: 'aboveRange',
-      label: 'Percentage Above Target Range'
-    },
-    {
-      key: 'belowRange',
-      label: 'Percentage Below Target Range'
-    }
+    { key: 'inRange', label: 'Percentage in Target Range' },
+    { key: 'aboveRange', label: 'Percentage Above Target Range' },
+    { key: 'belowRange', label: 'Percentage Below Target Range' }
   ];
+
+  // Configure x-axis title based on granularity
+  const getXAxisTitle = () => {
+    switch (granularity) {
+      case 'day':
+        return 'Hour';
+      case 'week':
+        return 'Day';
+      case 'month':
+        return 'Date';
+      case 'year':
+        return 'Month';
+      default:
+        return 'Date';
+    }
+  };
 
   return (
     <div>
@@ -365,7 +315,13 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
             x: {
               title: {
                 display: true,
-                text: 'Date'
+                text: getXAxisTitle()
+              },
+              ticks: {
+                // Adjust x-axis tick rendering for better readability
+                maxRotation: granularity === 'day' ? 0 : 45,
+                autoSkip: true,
+                maxTicksLimit: granularity === 'day' ? 12 : 20
               }
             },
             y: {
@@ -384,19 +340,19 @@ const GraphComponent = ({ speechData, selectedDate, granularity }) => {
             tooltip: {
               callbacks: {
                 title: function (context) {
+                  // Customize tooltip title based on granularity
+                  if (granularity === 'day') {
+                    return `Time: ${context[0].label}`;
+                  }
                   return context[0].label;
                 },
                 label: function (context) {
                   let label = context.dataset.label || '';
-
                   if (label) {
                     const baseMetric = label.split(' ')[0].toLowerCase();
                     label += `: ${context.parsed.y.toFixed(1)}%`;
-
-                    // Add target threshold information
                     label += `\nTarget: ${generateTooltipLabel(baseMetric)}`;
                   }
-
                   return label;
                 }
               }
@@ -438,6 +394,18 @@ GraphComponent.propTypes = {
       })
     })
   ).isRequired,
+  thresholds: PropTypes.shape({
+    volume_min: PropTypes.number.isRequired,
+    volume_max: PropTypes.number.isRequired,
+    pitch_min: PropTypes.number.isRequired,
+    pitch_max: PropTypes.number.isRequired,
+    speed_min: PropTypes.number.isRequired,
+    speed_max: PropTypes.number.isRequired,
+    volume_fluctuation_max: PropTypes.number.isRequired,
+    pitch_fluctuation_min: PropTypes.number.isRequired,
+    pitch_fluctuation_max: PropTypes.number.isRequired,
+    speed_fluctuation_max: PropTypes.number.isRequired
+  }),
   selectedDate: PropTypes.string,
   granularity: PropTypes.oneOf(['day', 'week', 'month', 'year']).isRequired
 };
